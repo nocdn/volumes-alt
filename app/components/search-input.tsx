@@ -22,10 +22,23 @@ import Mention from "@tiptap/extension-mention";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import { computePosition, flip, shift } from "@floating-ui/dom";
 
+import type { Id } from "../../convex/_generated/dataModel";
+
 interface SearchInputProps {
   allTags: string[];
   onSearchChange: (query: string) => void;
-  onSubmit: (url: string, tags: string[], title?: string) => Promise<void>;
+  onSubmit: (
+    url: string,
+    tags: string[],
+    title?: string,
+    editingId?: Id<"bookmarks">
+  ) => Promise<void>;
+  editingBookmark?: {
+    id: Id<"bookmarks">;
+    url: string;
+    title?: string | null;
+    tags: string[];
+  } | null;
 }
 
 // Memoized Plus Button component
@@ -266,6 +279,7 @@ export const SearchInput = memo(function SearchInput({
   allTags,
   onSearchChange,
   onSubmit,
+  editingBookmark,
 }: SearchInputProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitRef = useRef<(() => Promise<void>) | undefined>(undefined);
@@ -373,18 +387,65 @@ export const SearchInput = memo(function SearchInput({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(urlCandidate, mentions, titleFromInput || undefined);
+      await onSubmit(
+        urlCandidate,
+        mentions,
+        titleFromInput || undefined,
+        editingBookmark?.id
+      );
       editor.commands.clearContent();
       onSearchChange("");
     } finally {
       setIsSubmitting(false);
     }
-  }, [editor, isSubmitting, onSubmit, onSearchChange]);
+  }, [editor, isSubmitting, onSubmit, onSearchChange, editingBookmark?.id]);
 
   // Store handleSubmit in ref for keyboard shortcut
   useEffect(() => {
     submitRef.current = handleSubmit;
   }, [handleSubmit]);
+
+  const setEditorContentFromBookmark = useCallback(
+    (bookmark: NonNullable<SearchInputProps["editingBookmark"]>) => {
+      if (!editor) return;
+
+      const paragraphContent: Array<
+        | { type: "text"; text: string }
+        | { type: "mention"; attrs: { id: string } }
+      > = [{ type: "text", text: bookmark.url }];
+
+      for (const tag of bookmark.tags) {
+        paragraphContent.push({ type: "text", text: " " });
+        paragraphContent.push({ type: "mention", attrs: { id: tag } });
+      }
+
+      if (bookmark.title && bookmark.title.trim()) {
+        paragraphContent.push({
+          type: "text",
+          text: ` ${bookmark.title.trim()}`,
+        });
+      }
+
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: paragraphContent,
+          },
+        ],
+      });
+
+      editor.commands.focus("end");
+    },
+    [editor]
+  );
+
+  useEffect(() => {
+    if (editingBookmark) {
+      setEditorContentFromBookmark(editingBookmark);
+    }
+  }, [editingBookmark, setEditorContentFromBookmark]);
 
   return (
     <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[50%] h-28 px-5 py-5 flex flex-col justify-between">
@@ -394,12 +455,16 @@ export const SearchInput = memo(function SearchInput({
         <EditorContent editor={editor} className="flex-1" />
       </div>
 
-      {/* Bottom row: Plus button on right */}
-      <div className="flex justify-end">
-        <SubmitButton onClick={handleSubmit} disabled={isSubmitting} />
-        <div className="bg-[#E0E0FC] text-[#6A00F5] text-sm font-medium font-rounded px-2 py-1 rounded-full">
-          Editing
+      {/* Bottom row: editing pill on left, plus button on right */}
+      <div className="flex items-center justify-between">
+        <div className="min-h-[28px] flex items-center">
+          {editingBookmark ? (
+            <div className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.5 py-1 rounded-full">
+              Editing
+            </div>
+          ) : null}
         </div>
+        <SubmitButton onClick={handleSubmit} disabled={isSubmitting} />
       </div>
     </div>
   );

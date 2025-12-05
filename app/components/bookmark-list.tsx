@@ -10,6 +10,7 @@ type Bookmark = Doc<"bookmarks"> & { _creationTime: number };
 
 interface BookmarkListProps {
   bookmarks: Bookmark[];
+  onEdit?: (bookmark: Bookmark) => void;
 }
 
 // Format date based on the rules:
@@ -40,18 +41,20 @@ const BookmarkItem = memo(function BookmarkItem({
   bookmark,
   formattedDate,
   onDelete,
+  onEdit,
 }: {
   bookmark: Bookmark;
   formattedDate: string;
   onDelete: (id: Id<"bookmarks">) => void;
+  onEdit?: (bookmark: Bookmark) => void;
 }) {
   const handleFaviconClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`editing ${bookmark._id}`, bookmark.tags);
+      onEdit?.(bookmark);
     },
-    [bookmark._id, bookmark.tags]
+    [bookmark, onEdit]
   );
 
   const handleTitleClick = useCallback(() => {
@@ -106,6 +109,7 @@ const BookmarkItem = memo(function BookmarkItem({
 
 export const BookmarkList = memo(function BookmarkList({
   bookmarks,
+  onEdit,
 }: BookmarkListProps) {
   const deleteBookmark = useMutation(api.bookmarks.deleteBookmark);
   const [pendingDeletions, setPendingDeletions] = useState<
@@ -163,6 +167,7 @@ export const BookmarkList = memo(function BookmarkList({
           bookmark={bookmark}
           formattedDate={formattedDate}
           onDelete={handleDelete}
+          onEdit={onEdit}
         />
       ))}
     </div>
