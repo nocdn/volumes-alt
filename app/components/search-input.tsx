@@ -10,7 +10,7 @@ import {
   useImperativeHandle,
   useMemo,
 } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import {
   useEditor,
   EditorContent,
@@ -411,17 +411,22 @@ export const SearchInput = memo(function SearchInput({
     submitRef.current = handleSubmit;
   }, [handleSubmit]);
 
+  const cancelEditingAndClear = useCallback(() => {
+    if (!editingRef.current) return;
+    editor?.commands.clearContent();
+    onSearchChange("");
+    onCancelEditing?.();
+  }, [editor, onCancelEditing, onSearchChange]);
+
   const handleEditorKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (event.key === "Escape" && editingRef.current) {
         event.preventDefault();
-        editor?.commands.clearContent();
-        onSearchChange("");
-        onCancelEditing?.();
+        cancelEditingAndClear();
         return;
       }
     },
-    [editor, onCancelEditing, onSearchChange]
+    [cancelEditingAndClear]
   );
 
   const setEditorContentFromBookmark = useCallback(
@@ -482,8 +487,14 @@ export const SearchInput = memo(function SearchInput({
       <div className="flex items-center justify-between">
         <div className="min-h-[28px] flex items-center">
           {editingBookmark ? (
-            <div className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.5 py-1 rounded-full">
+            <div
+              className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.75 py-1 rounded-full relative group cursor-pointer"
+              onClick={cancelEditingAndClear}
+            >
               Editing
+              <div className="cursor-pointer absolute -right-2.5 -top-2 border-white border-2 p-0.75 rounded-full bg-[#F5F3FF] opacity-0 group-hover:opacity-100 transition-all duration-150">
+                <X size={12} color="#6A00F5" strokeWidth={2.75} />
+              </div>
             </div>
           ) : null}
         </div>
