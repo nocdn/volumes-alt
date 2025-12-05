@@ -24,6 +24,9 @@ export function BookmarkApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingBookmark, setEditingBookmark] =
     useState<EditingBookmark | null>(null);
+  const [pendingEdits, setPendingEdits] = useState<
+    Map<Id<"bookmarks">, { url: string; title?: string | null; tags: string[] }>
+  >(() => new Map());
   const [isPending, startTransition] = useTransition();
 
   // Extract all unique tags from bookmarks for mention suggestions
@@ -38,13 +41,27 @@ export function BookmarkApp() {
     return Array.from(tagSet).sort();
   }, [bookmarks]);
 
+  const bookmarksWithPending = useMemo(() => {
+    if (!bookmarks) return [];
+    return bookmarks.map((bookmark) => {
+      const pending = pendingEdits.get(bookmark._id);
+      if (!pending) return bookmark;
+      return {
+        ...bookmark,
+        url: pending.url,
+        title: pending.title ?? bookmark.title,
+        tags: pending.tags,
+      };
+    });
+  }, [bookmarks, pendingEdits]);
+
   // Filter bookmarks based on search query (title, url, tags)
   const filteredBookmarks = useMemo(() => {
-    if (!bookmarks) return [];
-    if (!searchQuery.trim()) return bookmarks;
+    if (!bookmarksWithPending) return [];
+    if (!searchQuery.trim()) return bookmarksWithPending;
 
     const query = searchQuery.toLowerCase().trim();
-    return bookmarks.filter((bookmark) => {
+    return bookmarksWithPending.filter((bookmark) => {
       const titleMatch = bookmark.title.toLowerCase().includes(query);
       const urlMatch = bookmark.url.toLowerCase().includes(query);
       const tagMatch = bookmark.tags.some((tag) =>
@@ -52,7 +69,7 @@ export function BookmarkApp() {
       );
       return titleMatch || urlMatch || tagMatch;
     });
-  }, [bookmarks, searchQuery]);
+  }, [bookmarksWithPending, searchQuery]);
 
   const handleSearchChange = useCallback((query: string) => {
     startTransition(() => {
@@ -70,7 +87,21 @@ export function BookmarkApp() {
       if (!url.trim()) return;
 
       const normalizedUrl = url.includes("://") ? url : `https://${url}`;
+      const optimisticTitle = titleFromInput?.trim() || normalizedUrl;
 
+      if (editingId) {
+        setPendingEdits((prev) => {
+          const next = new Map(prev);
+          next.set(editingId, {
+            url: normalizedUrl,
+            title: optimisticTitle,
+            tags,
+          });
+          return next;
+        });
+      }
+
+      let didSucceed = false;
       try {
         // Get the title and favicon from the server action
         const metadata = await getPageMetadata(normalizedUrl);
@@ -93,6 +124,7 @@ export function BookmarkApp() {
             tags,
           });
         }
+        didSucceed = true;
       } catch (error) {
         console.error("Failed to create bookmark:", error);
         // Fallback: create/update with URL as title if metadata fetch fails
@@ -112,7 +144,16 @@ export function BookmarkApp() {
         }
       }
       if (editingId) {
-        setEditingBookmark(null);
+        setPendingEdits((prev) => {
+          const next = new Map(prev);
+          next.delete(editingId);
+          return next;
+        });
+        if (didSucceed) {
+          setEditingBookmark((current) =>
+            current && current.id === editingId ? null : current
+          );
+        }
       }
     },
     [createBookmark, updateBookmark]
@@ -124,6 +165,19 @@ export function BookmarkApp() {
       url: bookmark.url,
       title: bookmark.title,
       tags: bookmark.tags,
+    });
+  }, []);
+
+  const handleCancelEditing = useCallback(() => {
+    setEditingBookmark((current) => {
+      if (current) {
+        setPendingEdits((prev) => {
+          const next = new Map(prev);
+          next.delete(current.id);
+          return next;
+        });
+      }
+      return null;
     });
   }, []);
 
@@ -142,6 +196,7 @@ export function BookmarkApp() {
         onSearchChange={handleSearchChange}
         onSubmit={handleSubmit}
         editingBookmark={editingBookmark}
+        onCancelEditing={handleCancelEditing}
       />
       <div className="h-8" /> {/* gap-8 equivalent */}
       <BookmarkList bookmarks={filteredBookmarks} onEdit={handleEditBookmark} />

@@ -39,6 +39,7 @@ interface SearchInputProps {
     title?: string | null;
     tags: string[];
   } | null;
+  onCancelEditing?: () => void;
 }
 
 // Memoized Plus Button component
@@ -280,15 +281,20 @@ export const SearchInput = memo(function SearchInput({
   onSearchChange,
   onSubmit,
   editingBookmark,
+  onCancelEditing,
 }: SearchInputProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitRef = useRef<(() => Promise<void>) | undefined>(undefined);
+  const editingRef = useRef<typeof editingBookmark>(null);
 
   // Use a ref to always access the latest tags without recreating the editor
   const tagsRef = useRef<string[]>(allTags);
   useEffect(() => {
     tagsRef.current = allTags;
   }, [allTags]);
+  useEffect(() => {
+    editingRef.current = editingBookmark ?? null;
+  }, [editingBookmark]);
 
   // Create the mention suggestion once, using the ref getter
   const mentionSuggestion = useMemo(
@@ -405,6 +411,19 @@ export const SearchInput = memo(function SearchInput({
     submitRef.current = handleSubmit;
   }, [handleSubmit]);
 
+  const handleEditorKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === "Escape" && editingRef.current) {
+        event.preventDefault();
+        editor?.commands.clearContent();
+        onSearchChange("");
+        onCancelEditing?.();
+        return;
+      }
+    },
+    [editor, onCancelEditing, onSearchChange]
+  );
+
   const setEditorContentFromBookmark = useCallback(
     (bookmark: NonNullable<SearchInputProps["editingBookmark"]>) => {
       if (!editor) return;
@@ -452,7 +471,11 @@ export const SearchInput = memo(function SearchInput({
       {/* Top row: Search icon + Input */}
       <div className="flex items-start gap-2">
         <Search size={17} color="gray" className="mt-1 shrink-0" />
-        <EditorContent editor={editor} className="flex-1" />
+        <EditorContent
+          editor={editor}
+          className="flex-1"
+          onKeyDown={handleEditorKeyDown}
+        />
       </div>
 
       {/* Bottom row: editing pill on left, plus button on right */}
