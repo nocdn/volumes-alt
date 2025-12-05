@@ -1,7 +1,9 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { useMutation } from "convex/react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { api } from "../../convex/_generated/api";
 
 // Type for bookmark from Convex
 type Bookmark = Doc<"bookmarks"> & { _creationTime: number };
@@ -37,9 +39,11 @@ function formatDate(timestamp: number): string {
 const BookmarkItem = memo(function BookmarkItem({
   bookmark,
   formattedDate,
+  onDelete,
 }: {
   bookmark: Bookmark;
   formattedDate: string;
+  onDelete: (id: Id<"bookmarks">) => void;
 }) {
   const handleFaviconClick = useCallback(
     (e: React.MouseEvent) => {
@@ -54,8 +58,12 @@ const BookmarkItem = memo(function BookmarkItem({
     window.open(bookmark.url, "_blank", "noopener,noreferrer");
   }, [bookmark.url]);
 
+  const handleDeleteClick = useCallback(() => {
+    onDelete(bookmark._id);
+  }, [bookmark._id, onDelete]);
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 group">
       {/* Favicon */}
       <img
         src={bookmark.favicon}
@@ -80,8 +88,16 @@ const BookmarkItem = memo(function BookmarkItem({
         {bookmark.title}
       </span>
 
+      {/* Delete Button */}
+      <span
+        className="text-sm text-[#FD2B38] cursor-pointer transition-all font-medium duration-100 font-rounded opacity-0 group-hover:opacity-100"
+        onClick={handleDeleteClick}
+      >
+        Delete
+      </span>
+
       {/* Date */}
-      <span className="ml-auto text-sm tabular-nums text-gray-400 shrink-0">
+      <span className="ml-auto text-sm tabular-nums font-rounded text-gray-400 shrink-0">
         {formattedDate}
       </span>
     </div>
@@ -91,15 +107,45 @@ const BookmarkItem = memo(function BookmarkItem({
 export const BookmarkList = memo(function BookmarkList({
   bookmarks,
 }: BookmarkListProps) {
+  const deleteBookmark = useMutation(api.bookmarks.deleteBookmark);
+  const [pendingDeletions, setPendingDeletions] = useState<
+    Set<Id<"bookmarks">>
+  >(() => new Set());
+
+  const handleDelete = useCallback(
+    (id: Id<"bookmarks">) => {
+      setPendingDeletions((prev) => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+
+      deleteBookmark({ id }).catch((error) => {
+        console.error("Failed to delete bookmark", error);
+        setPendingDeletions((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      });
+    },
+    [deleteBookmark]
+  );
+
+  const visibleBookmarks = useMemo(
+    () => bookmarks.filter((bookmark) => !pendingDeletions.has(bookmark._id)),
+    [bookmarks, pendingDeletions]
+  );
+
   // Memoize formatted dates to avoid recalculation on each render
   const bookmarksWithDates = useMemo(() => {
-    return bookmarks.map((bookmark) => ({
+    return visibleBookmarks.map((bookmark) => ({
       bookmark,
       formattedDate: formatDate(bookmark._creationTime),
     }));
-  }, [bookmarks]);
+  }, [visibleBookmarks]);
 
-  if (bookmarks.length === 0) {
+  if (visibleBookmarks.length === 0) {
     return (
       <div className="flex flex-col gap-4 w-[50%] px-1">
         <p className="text-gray-400 text-sm text-center py-8">
@@ -116,6 +162,7 @@ export const BookmarkList = memo(function BookmarkList({
           key={bookmark._id}
           bookmark={bookmark}
           formattedDate={formattedDate}
+          onDelete={handleDelete}
         />
       ))}
     </div>
