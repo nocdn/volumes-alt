@@ -25,7 +25,7 @@ import { computePosition, flip, shift } from "@floating-ui/dom";
 interface SearchInputProps {
   allTags: string[];
   onSearchChange: (query: string) => void;
-  onSubmit: (url: string, tags: string[]) => Promise<void>;
+  onSubmit: (url: string, tags: string[], title?: string) => Promise<void>;
 }
 
 // Memoized Plus Button component
@@ -217,25 +217,34 @@ function createMentionSuggestion(getTagsRef: () => string[]) {
 }
 
 // Extract text and mentions from editor content
+type ContentPart =
+  | { type: "text"; value: string }
+  | { type: "mention"; id: string };
+
 function extractContentFromEditor(editor: ReturnType<typeof useEditor>): {
   text: string;
   mentions: string[];
+  parts: ContentPart[];
 } {
-  if (!editor) return { text: "", mentions: [] };
+  if (!editor) return { text: "", mentions: [], parts: [] };
 
   const json = editor.getJSON();
   let text = "";
   const mentions: string[] = [];
+  const parts: ContentPart[] = [];
 
   function traverse(node: Record<string, unknown>) {
     if (node.type === "text" && typeof node.text === "string") {
       text += node.text;
+      parts.push({ type: "text", value: node.text });
     } else if (
       node.type === "mention" &&
       node.attrs &&
       typeof (node.attrs as Record<string, unknown>).id === "string"
     ) {
-      mentions.push((node.attrs as Record<string, unknown>).id as string);
+      const id = (node.attrs as Record<string, unknown>).id as string;
+      mentions.push(id);
+      parts.push({ type: "mention", id });
     }
     if (Array.isArray(node.content)) {
       for (const child of node.content) {
@@ -250,7 +259,7 @@ function extractContentFromEditor(editor: ReturnType<typeof useEditor>): {
     }
   }
 
-  return { text: text.trim(), mentions };
+  return { text: text.trim(), mentions, parts };
 }
 
 export const SearchInput = memo(function SearchInput({
@@ -317,18 +326,54 @@ export const SearchInput = memo(function SearchInput({
   const handleSubmit = useCallback(async () => {
     if (!editor || isSubmitting) return;
 
-    const { text, mentions } = extractContentFromEditor(editor);
+    const { text, mentions, parts } = extractContentFromEditor(editor);
 
     // Check if the text looks like a URL
     const urlPattern = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i;
-    if (!urlPattern.test(text)) {
+    const firstMentionIndex = parts.findIndex(
+      (part) => part.type === "mention"
+    );
+    let lastMentionIndex = -1;
+    parts.forEach((part, index) => {
+      if (part.type === "mention") lastMentionIndex = index;
+    });
+
+    const textBeforeFirstMention = (
+      firstMentionIndex === -1 ? parts : parts.slice(0, firstMentionIndex)
+    )
+      .filter(
+        (part): part is { type: "text"; value: string } => part.type === "text"
+      )
+      .map((part) => part.value)
+      .join("");
+
+    const urlCandidate =
+      textBeforeFirstMention.trim().split(/\s+/).find(Boolean) ?? "";
+
+    const titleFromInput =
+      lastMentionIndex !== -1
+        ? parts
+            .slice(lastMentionIndex + 1)
+            .filter(
+              (part): part is { type: "text"; value: string } =>
+                part.type === "text"
+            )
+            .map((part) => part.value)
+            .join("")
+            .trim()
+        : (() => {
+            const words = text.split(/\s+/).filter(Boolean);
+            return words.slice(1).join(" ");
+          })();
+
+    if (!urlPattern.test(urlCandidate)) {
       // It's a search, not a URL submission
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onSubmit(text, mentions);
+      await onSubmit(urlCandidate, mentions, titleFromInput || undefined);
       editor.commands.clearContent();
       onSearchChange("");
     } finally {
@@ -352,6 +397,9 @@ export const SearchInput = memo(function SearchInput({
       {/* Bottom row: Plus button on right */}
       <div className="flex justify-end">
         <SubmitButton onClick={handleSubmit} disabled={isSubmitting} />
+        <div className="bg-[#E0E0FC] text-[#6A00F5] text-sm font-medium font-rounded px-2 py-1 rounded-full">
+          Editing
+        </div>
       </div>
     </div>
   );

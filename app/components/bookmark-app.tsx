@@ -48,21 +48,21 @@ export function BookmarkApp() {
   }, []);
 
   const handleSubmit = useCallback(
-    async (url: string, tags: string[]) => {
+    async (url: string, tags: string[], titleFromInput?: string) => {
       if (!url.trim()) return;
+
+      const normalizedUrl = url.includes("://") ? url : `https://${url}`;
 
       try {
         // Get the title and favicon from the server action
-        const metadata = await getPageMetadata(
-          url.includes("://") ? url : `https://${url}`
-        );
-        const title = metadata.title || url;
+        const metadata = await getPageMetadata(normalizedUrl);
+        const title = titleFromInput?.trim() || metadata.title || normalizedUrl;
         const favicon = metadata.logo;
 
         console.log("Adding bookmark with favicon:", favicon);
 
         await createBookmark({
-          url: url.includes("://") ? url : `https://${url}`,
+          url: normalizedUrl,
           title,
           tags,
         });
@@ -70,8 +70,8 @@ export function BookmarkApp() {
         console.error("Failed to create bookmark:", error);
         // Fallback: create with URL as title if metadata fetch fails
         await createBookmark({
-          url: url.includes("://") ? url : `https://${url}`,
-          title: url,
+          url: normalizedUrl,
+          title: titleFromInput?.trim() || normalizedUrl,
           tags,
         });
       }
