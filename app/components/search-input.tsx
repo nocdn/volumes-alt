@@ -10,7 +10,7 @@ import {
   useImperativeHandle,
   useMemo,
 } from "react";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, Loader } from "lucide-react";
 import {
   useEditor,
   EditorContent,
@@ -23,6 +23,8 @@ import type { SuggestionProps } from "@tiptap/suggestion";
 import { computePosition, flip, shift } from "@floating-ui/dom";
 
 import type { Id } from "../../convex/_generated/dataModel";
+
+import { AnimatePresence, motion } from "motion/react";
 
 interface SearchInputProps {
   allTags: string[];
@@ -40,23 +42,46 @@ interface SearchInputProps {
     tags: string[];
   } | null;
   onCancelEditing?: () => void;
+  isRefreshing?: boolean;
 }
 
 // Memoized Plus Button component
 const SubmitButton = memo(function SubmitButton({
   onClick,
   disabled,
+  isRefreshing,
 }: {
   onClick: () => void;
   disabled: boolean;
+  isRefreshing?: boolean;
 }) {
   return (
     <div
       onClick={disabled ? undefined : onClick}
-      className={`rounded-full cursor-pointer p-1.25 transition-colors ${disabled ? "opacity-50" : "hover:bg-[#E5E6E6]"}`}
+      className={`rounded-full cursor-pointer size-7 flex items-center justify-center transition-colors ${disabled ? "opacity-50" : "hover:bg-[#E5E6E6]"}`}
       style={{ backgroundColor: "#F2F3F3" }}
     >
-      <Plus size={19} color="#7a7a7a" />
+      <AnimatePresence mode="popLayout">
+        {isRefreshing ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Loader size={17} color="#7a7a7a" className="animate-spin" />
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Plus size={19} color="#7a7a7a" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
@@ -282,6 +307,7 @@ export const SearchInput = memo(function SearchInput({
   onSubmit,
   editingBookmark,
   onCancelEditing,
+  isRefreshing,
 }: SearchInputProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitRef = useRef<(() => Promise<void>) | undefined>(undefined);
@@ -498,7 +524,11 @@ export const SearchInput = memo(function SearchInput({
             </div>
           ) : null}
         </div>
-        <SubmitButton onClick={handleSubmit} disabled={isSubmitting} />
+        <SubmitButton
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          isRefreshing={isRefreshing}
+        />
       </div>
     </div>
   );

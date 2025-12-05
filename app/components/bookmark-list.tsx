@@ -149,15 +149,15 @@ export const BookmarkList = memo(function BookmarkList({
     }));
   }, [visibleBookmarks]);
 
-  if (visibleBookmarks.length === 0) {
-    return (
-      <div className="flex flex-col gap-4 w-[50%] px-1">
-        <p className="text-gray-400 text-sm text-center py-8">
-          No bookmarks found
-        </p>
-      </div>
-    );
-  }
+  // if (visibleBookmarks.length === 0) {
+  //   return (
+  //     <div className="flex flex-col gap-4 w-[50%] px-1">
+  //       <p className="text-gray-400 text-sm text-center py-8">
+  //         No bookmarks found
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex flex-col gap-4 w-[50%] px-1">

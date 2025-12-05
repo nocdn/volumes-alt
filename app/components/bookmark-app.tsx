@@ -2,7 +2,13 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useMemo, useCallback, useState, useTransition } from "react";
+import {
+  useMemo,
+  useCallback,
+  useState,
+  useTransition,
+  useEffect,
+} from "react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { SearchInput } from "./search-input";
 import { BookmarkList } from "./bookmark-list";
@@ -27,7 +33,9 @@ export function BookmarkApp() {
   const [pendingEdits, setPendingEdits] = useState<
     Map<Id<"bookmarks">, { url: string; title?: string | null; tags: string[] }>
   >(() => new Map());
+  const [localBookmarks, setLocalBookmarks] = useState<Bookmark[] | null>(null);
   const [isPending, startTransition] = useTransition();
+  const CACHE_KEY = "bookmark-cache-v1";
 
   // Extract all unique tags from bookmarks for mention suggestions
   const allTags = useMemo(() => {
@@ -41,9 +49,15 @@ export function BookmarkApp() {
     return Array.from(tagSet).sort();
   }, [bookmarks]);
 
+  const baseBookmarks = useMemo(() => {
+    if (localBookmarks) return localBookmarks;
+    if (bookmarks) return bookmarks;
+    return [];
+  }, [bookmarks, localBookmarks]);
+
   const bookmarksWithPending = useMemo(() => {
-    if (!bookmarks) return [];
-    return bookmarks.map((bookmark) => {
+    if (!baseBookmarks) return [];
+    return baseBookmarks.map((bookmark) => {
       const pending = pendingEdits.get(bookmark._id);
       if (!pending) return bookmark;
       return {
@@ -53,7 +67,7 @@ export function BookmarkApp() {
         tags: pending.tags,
       };
     });
-  }, [bookmarks, pendingEdits]);
+  }, [baseBookmarks, pendingEdits]);
 
   // Filter bookmarks based on search query (title, url, tags)
   const filteredBookmarks = useMemo(() => {
@@ -181,6 +195,31 @@ export function BookmarkApp() {
     });
   }, []);
 
+  // Load cached bookmarks on mount for instant display
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as Bookmark[];
+        setLocalBookmarks(parsed);
+      }
+    } catch (error) {
+      console.error("Failed to read cached bookmarks", error);
+    }
+  }, []);
+
+  // When fresh data arrives from Convex, update cache and local state
+  useEffect(() => {
+    if (!bookmarks) return;
+    setLocalBookmarks(bookmarks);
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(bookmarks));
+    } catch (error) {
+      console.error("Failed to write cached bookmarks", error);
+    }
+  }, [bookmarks]);
+
   //   if (bookmarks === undefined) {
   //     return (
   //       <div className="flex flex-col items-center pt-20">
@@ -197,6 +236,7 @@ export function BookmarkApp() {
         onSubmit={handleSubmit}
         editingBookmark={editingBookmark}
         onCancelEditing={handleCancelEditing}
+        isRefreshing={bookmarks === undefined}
       />
       <div className="h-8" /> {/* gap-8 equivalent */}
       <BookmarkList bookmarks={filteredBookmarks} onEdit={handleEditBookmark} />
