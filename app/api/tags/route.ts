@@ -3,7 +3,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 
 // Revalidate this route every 3 days (in seconds)
-export const revalidate = 60 * 60 * 24 * 3;
+export const revalidate = 259200;
 
 // Make this a static route with ISR (so Next can cache the response)
 export const dynamic = "force-static";
