@@ -1,59 +1,43 @@
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../../convex/_generated/api";
+import { NextResponse } from "next/server";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
 
-const convexUrl =
-  process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL || "";
-const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
+// Revalidate this route every 3 days (in seconds)
+export const revalidate = 60 * 60 * 24 * 3;
 
-const CACHE_TTL_MS = 30_000; // 30s cache ttl
-const CDN_S_MAXAGE = 60; // 30s CDN fresh window
-const CDN_STALE_WHILE_REVALIDATE = 60 * 60 * 24 * 3; // 3 days
-let cachedTags: string[] | null = null;
-let cachedAt = 0;
+// Make this a static route with ISR (so Next can cache the response)
+export const dynamic = "force-static";
 
 export async function GET() {
-  if (!convex) {
-    return new Response("Convex URL not configured", { status: 500 });
-  }
-
-  const now = Date.now();
-  if (cachedTags && now - cachedAt < CACHE_TTL_MS) {
-    return new Response(JSON.stringify(cachedTags), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": `s-maxage=${CDN_S_MAXAGE}, stale-while-revalidate=${CDN_STALE_WHILE_REVALIDATE}`,
-      },
-    });
-  }
-
   try {
-    const bookmarks = await convex.query(api.bookmarks.list, {});
-    const freq = new Map<string, number>();
+    const bookmarks = await fetchQuery(api.bookmarks.list, {});
+
+    const tagSet = new Set<string>();
+
     for (const bookmark of bookmarks) {
-      for (const tag of bookmark.tags) {
-        if (!tag) continue;
-        freq.set(tag, (freq.get(tag) ?? 0) + 1);
+      const tags = bookmark.tags ?? [];
+
+      for (const rawTag of tags) {
+        if (typeof rawTag !== "string") continue;
+
+        const tag = rawTag.trim();
+        if (tag.length === 0) continue;
+
+        tagSet.add(tag);
       }
     }
-    const tags = Array.from(freq.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([tag]) => tag);
-    cachedTags = tags;
-    cachedAt = now;
-    return new Response(JSON.stringify(tags), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": `s-maxage=${CDN_S_MAXAGE}, stale-while-revalidate=${CDN_STALE_WHILE_REVALIDATE}`,
-      },
-    });
+
+    const tags = Array.from(tagSet).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+
+    return NextResponse.json(tags);
   } catch (error) {
     console.error("Failed to fetch tags via API", error);
-    return new Response("Internal Server Error", { status: 500 });
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
 export async function POST() {
-  return new Response("Method Not Allowed", { status: 405 });
+  return new NextResponse("Method Not Allowed", { status: 405 });
 }
