@@ -5,9 +5,9 @@ const convexUrl =
   process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL || "";
 const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
 
-const CACHE_TTL_MS = 30_000;
-const CDN_S_MAXAGE = 30;
-const CDN_STALE_WHILE_REVALIDATE = 60 * 60 * 24 * 3;
+const CACHE_TTL_MS = 30_000; // 30s cache ttl
+const CDN_S_MAXAGE = 60; // 30s CDN fresh window
+const CDN_STALE_WHILE_REVALIDATE = 60 * 60 * 24 * 3; // 3 days
 let cachedTags: string[] | null = null;
 let cachedAt = 0;
 
@@ -29,13 +29,16 @@ export async function GET() {
 
   try {
     const bookmarks = await convex.query(api.bookmarks.list, {});
-    const tagSet = new Set<string>();
+    const freq = new Map<string, number>();
     for (const bookmark of bookmarks) {
       for (const tag of bookmark.tags) {
-        if (tag) tagSet.add(tag);
+        if (!tag) continue;
+        freq.set(tag, (freq.get(tag) ?? 0) + 1);
       }
     }
-    const tags = Array.from(tagSet);
+    const tags = Array.from(freq.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag]) => tag);
     cachedTags = tags;
     cachedAt = now;
     return new Response(JSON.stringify(tags), {

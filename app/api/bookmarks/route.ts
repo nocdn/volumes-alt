@@ -32,9 +32,18 @@ export async function POST(request: Request) {
   }
 
   try {
+    const reqUrl = new URL(request.url);
+    const debugFromQuery = reqUrl.searchParams.get("debug") === "true";
     const body = await request.json();
     const url: unknown = body?.url;
     const tagsInput: unknown = body?.tags;
+    const debugFromBody =
+      typeof body?.debug === "boolean"
+        ? body.debug
+        : typeof body?.debug === "string"
+          ? body.debug.toLowerCase() === "true"
+          : false;
+    const debug = debugFromQuery || debugFromBody;
 
     if (typeof url !== "string" || !url.trim()) {
       return new Response("Invalid url", { status: 400 });
@@ -60,12 +69,31 @@ export async function POST(request: Request) {
     const title = metadata.title?.trim() || normalizedUrl;
     const favicon = metadata.logo?.trim() || fallbackFavicon;
 
-    const newId = await convex.mutation(api.bookmarks.createBookmark, {
+    const payload = {
       url: normalizedUrl,
       title,
       tags,
       favicon,
-    });
+    };
+
+    console.log("[api/bookmarks] incoming body:", body);
+    console.log("[api/bookmarks] normalizedUrl:", normalizedUrl);
+    console.log("[api/bookmarks] tags:", tags);
+    console.log("[api/bookmarks] metadata:", metadata);
+    console.log("[api/bookmarks] fallbackFavicon:", fallbackFavicon);
+    console.log("[api/bookmarks] final payload:", payload);
+
+    if (debug) {
+      return new Response(
+        JSON.stringify({ debug: true, payload, message: "Not persisted" }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const newId = await convex.mutation(api.bookmarks.createBookmark, payload);
 
     return new Response(JSON.stringify({ id: newId }), {
       status: 201,
