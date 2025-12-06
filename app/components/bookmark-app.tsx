@@ -33,6 +33,7 @@ export function BookmarkApp() {
   const [pendingEdits, setPendingEdits] = useState<
     Map<Id<"bookmarks">, { url: string; title?: string | null; tags: string[] }>
   >(() => new Map());
+  const [pendingCreations, setPendingCreations] = useState<Bookmark[]>([]);
   const [localBookmarks, setLocalBookmarks] = useState<Bookmark[] | null>(null);
   const [isPending, startTransition] = useTransition();
   const CACHE_KEY = "bookmark-cache-v1";
@@ -55,9 +56,13 @@ export function BookmarkApp() {
     return [];
   }, [bookmarks, localBookmarks]);
 
+  const bookmarksWithPendingCreates = useMemo(() => {
+    return [...pendingCreations, ...baseBookmarks];
+  }, [pendingCreations, baseBookmarks]);
+
   const bookmarksWithPending = useMemo(() => {
-    if (!baseBookmarks) return [];
-    return baseBookmarks.map((bookmark) => {
+    if (!bookmarksWithPendingCreates) return [];
+    return bookmarksWithPendingCreates.map((bookmark) => {
       const pending = pendingEdits.get(bookmark._id);
       if (!pending) return bookmark;
       return {
@@ -67,7 +72,7 @@ export function BookmarkApp() {
         tags: pending.tags,
       };
     });
-  }, [baseBookmarks, pendingEdits]);
+  }, [bookmarksWithPendingCreates, pendingEdits]);
 
   // Filter bookmarks based on search query (title, url, tags)
   const filteredBookmarks = useMemo(() => {
@@ -102,6 +107,10 @@ export function BookmarkApp() {
 
       const normalizedUrl = url.includes("://") ? url : `https://${url}`;
       const optimisticTitle = titleFromInput?.trim() || normalizedUrl;
+      const optimisticFavicon =
+        "https://www.google.com/s2/favicons?domain=example.com&sz=128";
+
+      let optimisticCreationId: Id<"bookmarks"> | null = null;
 
       if (editingId) {
         setPendingEdits((prev) => {
@@ -113,6 +122,18 @@ export function BookmarkApp() {
           });
           return next;
         });
+      } else {
+        const tempId = `temp-${Date.now()}` as Id<"bookmarks">;
+        const optimisticBookmark: Bookmark = {
+          _id: tempId,
+          _creationTime: Date.now(),
+          url: normalizedUrl,
+          title: "Fetching title",
+          tags,
+          favicon: optimisticFavicon,
+        };
+        optimisticCreationId = tempId;
+        setPendingCreations((prev) => [optimisticBookmark, ...prev]);
       }
 
       let didSucceed = false;
@@ -130,8 +151,6 @@ export function BookmarkApp() {
             tags,
           });
         } else {
-          console.log("Adding bookmark with favicon:", favicon);
-
           await createBookmark({
             url: normalizedUrl,
             title,
@@ -166,6 +185,13 @@ export function BookmarkApp() {
         if (didSucceed) {
           setEditingBookmark((current) =>
             current && current.id === editingId ? null : current
+          );
+        }
+      } else {
+        // Remove optimistic creation once server response is back (success or failure)
+        if (optimisticCreationId) {
+          setPendingCreations((prev) =>
+            prev.filter((bookmark) => bookmark._id !== optimisticCreationId)
           );
         }
       }
