@@ -111,8 +111,23 @@ export function BookmarkApp() {
 
       const normalizedUrl = url.includes("://") ? url : `https://${url}`;
       const optimisticTitle = titleFromInput?.trim() || normalizedUrl;
-      const optimisticFavicon =
-        "https://www.google.com/s2/favicons?domain=example.com&sz=128";
+      const getHostname = (input: string): string | null => {
+        try {
+          const parsed = new URL(
+            input.includes("://") ? input : `https://${input}`
+          );
+          return parsed.hostname;
+        } catch {
+          return null;
+        }
+      };
+      const buildFaviconUrl = (domain: string | null): string => {
+        if (!domain) {
+          return "https://www.google.com/s2/favicons?domain=example.com&sz=128";
+        }
+        return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`;
+      };
+      const fallbackFavicon = buildFaviconUrl(getHostname(normalizedUrl));
 
       let optimisticCreationId: Id<"bookmarks"> | null = null;
 
@@ -134,7 +149,7 @@ export function BookmarkApp() {
           url: normalizedUrl,
           title: "Fetching title",
           tags,
-          favicon: optimisticFavicon,
+          favicon: fallbackFavicon,
         };
         optimisticCreationId = tempId;
         setPendingCreations((prev) => [optimisticBookmark, ...prev]);
@@ -145,7 +160,7 @@ export function BookmarkApp() {
         // Get the title and favicon from the server action
         const metadata = await getPageMetadata(normalizedUrl);
         const title = titleFromInput?.trim() || metadata.title || normalizedUrl;
-        const favicon = metadata.logo;
+        const favicon = metadata.logo || fallbackFavicon;
 
         if (editingId) {
           await updateBookmark({
@@ -159,6 +174,7 @@ export function BookmarkApp() {
             url: normalizedUrl,
             title,
             tags,
+            favicon,
           });
         }
         didSucceed = true;
@@ -177,6 +193,7 @@ export function BookmarkApp() {
             url: normalizedUrl,
             title: titleFromInput?.trim() || normalizedUrl,
             tags,
+            favicon: fallbackFavicon,
           });
         }
       }

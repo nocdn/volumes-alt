@@ -110,6 +110,7 @@ export const createBookmark = mutation({
     title: v.string(),
     comment: v.optional(v.string()),
     tags: v.array(v.string()),
+    favicon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     function getHostname(input: string): string | null {
@@ -134,7 +135,7 @@ export const createBookmark = mutation({
     }
 
     const hostname = getHostname(args.url);
-    const faviconUrl = buildFaviconUrl(hostname);
+    const faviconUrl = args.favicon ?? buildFaviconUrl(hostname);
     console.log("favicon url", faviconUrl, "for hostname", hostname);
     const newBookmarkId = await ctx.db.insert("bookmarks", {
       url: args.url,

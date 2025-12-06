@@ -49,6 +49,8 @@ const BookmarkItem = memo(function BookmarkItem({
   onDelete: (id: Id<"bookmarks">) => void;
   onEdit?: (bookmark: Bookmark) => void;
 }) {
+  const isFetchingPlaceholder = bookmark.title === "Fetching title";
+
   const handleFaviconClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -69,19 +71,26 @@ const BookmarkItem = memo(function BookmarkItem({
   return (
     <div className="flex items-center gap-3 group">
       {/* Favicon */}
-      <img
-        src={bookmark.favicon}
-        alt=""
-        width={16}
-        height={16}
-        className="shrink-0 cursor-pointer"
-        onClick={handleFaviconClick}
-        onError={(e) => {
-          // Fallback to a default icon on error
-          (e.target as HTMLImageElement).src =
-            "https://www.google.com/s2/favicons?domain=example.com&sz=128";
-        }}
-      />
+      {isFetchingPlaceholder ? (
+        <div
+          className="shrink-0 w-4 h-4 rounded-md bg-[#E0E8FF] animate-spin"
+          onClick={handleFaviconClick}
+        />
+      ) : (
+        <img
+          src={bookmark.favicon}
+          alt=""
+          width={16}
+          height={16}
+          className="shrink-0 cursor-pointer"
+          onClick={handleFaviconClick}
+          onError={(e) => {
+            // Fallback to a default icon on error
+            (e.target as HTMLImageElement).src =
+              "https://www.google.com/s2/favicons?domain=example.com&sz=128";
+          }}
+        />
+      )}
 
       {/* Title */}
       <span
