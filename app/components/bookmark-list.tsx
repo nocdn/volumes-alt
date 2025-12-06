@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useMutation } from "convex/react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
@@ -149,6 +150,16 @@ export const BookmarkList = memo(function BookmarkList({
     }));
   }, [visibleBookmarks]);
 
+  // Only animate on first load; subsequent renders are instant.
+  const hasAnimatedRef = useRef(false);
+  const shouldAnimate = !hasAnimatedRef.current;
+
+  useEffect(() => {
+    if (shouldAnimate && bookmarksWithDates.length > 0) {
+      hasAnimatedRef.current = true;
+    }
+  }, [bookmarksWithDates.length, shouldAnimate]);
+
   // if (visibleBookmarks.length === 0) {
   //   return (
   //     <div className="flex flex-col gap-4 w-[50%] px-1">
@@ -161,14 +172,26 @@ export const BookmarkList = memo(function BookmarkList({
 
   return (
     <div className="flex flex-col gap-4 w-[50%] px-1">
-      {bookmarksWithDates.map(({ bookmark, formattedDate }) => (
-        <BookmarkItem
+      {bookmarksWithDates.map(({ bookmark, formattedDate }, index) => (
+        <motion.div
           key={bookmark._id}
-          bookmark={bookmark}
-          formattedDate={formattedDate}
-          onDelete={handleDelete}
-          onEdit={onEdit}
-        />
+          initial={shouldAnimate ? { opacity: 0, filter: "blur(1px)" } : false}
+          animate={
+            shouldAnimate ? { opacity: 1, filter: "blur(0px)" } : undefined
+          }
+          transition={
+            shouldAnimate
+              ? { duration: 0.15, delay: index < 20 ? index * 0.02 : 0 }
+              : undefined
+          }
+        >
+          <BookmarkItem
+            bookmark={bookmark}
+            formattedDate={formattedDate}
+            onDelete={handleDelete}
+            onEdit={onEdit}
+          />
+        </motion.div>
       ))}
     </div>
   );
