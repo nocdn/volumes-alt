@@ -86,7 +86,9 @@ const BookmarkItem = memo(function BookmarkItem({
       {/* Title */}
       <span
         onClick={handleTitleClick}
-        className="font-inter text-base cursor-pointer truncate flex-1"
+        className={`font-inter text-base cursor-pointer truncate flex-1 ${
+          bookmark.title === "Fetching title" ? "text-gray-400" : ""
+        }`}
         style={{ fontWeight: 400 }}
       >
         {bookmark.title}

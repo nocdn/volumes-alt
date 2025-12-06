@@ -96,6 +96,10 @@ export function BookmarkApp() {
     });
   }, []);
 
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery("");
+  }, []);
+
   const handleSubmit = useCallback(
     async (
       url: string,
@@ -259,6 +263,7 @@ export function BookmarkApp() {
       <SearchInput
         allTags={allTags}
         onSearchChange={handleSearchChange}
+        onClearSearch={handleClearSearch}
         onSubmit={handleSubmit}
         editingBookmark={editingBookmark}
         onCancelEditing={handleCancelEditing}

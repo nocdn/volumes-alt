@@ -29,6 +29,7 @@ import { AnimatePresence, motion } from "motion/react";
 interface SearchInputProps {
   allTags: string[];
   onSearchChange: (query: string) => void;
+  onClearSearch?: () => void;
   onSubmit: (
     url: string,
     tags: string[],
@@ -304,6 +305,7 @@ function extractContentFromEditor(editor: ReturnType<typeof useEditor>): {
 export const SearchInput = memo(function SearchInput({
   allTags,
   onSearchChange,
+  onClearSearch,
   onSubmit,
   editingBookmark,
   onCancelEditing,
@@ -420,14 +422,17 @@ export const SearchInput = memo(function SearchInput({
 
     setIsSubmitting(true);
     try {
+      // Clear immediately so the list resets while the mutation proceeds
+      editor.commands.clearContent();
+      onSearchChange("");
+      onClearSearch?.();
+
       await onSubmit(
         urlCandidate,
         mentions,
         titleFromInput || undefined,
         editingBookmark?.id
       );
-      editor.commands.clearContent();
-      onSearchChange("");
     } finally {
       setIsSubmitting(false);
     }
