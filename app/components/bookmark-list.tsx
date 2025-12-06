@@ -73,7 +73,7 @@ const BookmarkItem = memo(function BookmarkItem({
       {/* Favicon */}
       {isFetchingPlaceholder ? (
         <div
-          className="shrink-0 w-4 h-4 rounded-md bg-[#E0E8FF] animate-spin"
+          className="shrink-0 w-3.5 h-3.5 rounded-full bg-[#E0E8FF] animate-pulse"
           onClick={handleFaviconClick}
         />
       ) : (
