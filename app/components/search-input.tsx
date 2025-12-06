@@ -312,6 +312,7 @@ export const SearchInput = memo(function SearchInput({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitRef = useRef<(() => Promise<void>) | undefined>(undefined);
   const editingRef = useRef<typeof editingBookmark>(null);
+  const hasFocusedOnceRef = useRef(false);
 
   // Use a ref to always access the latest tags without recreating the editor
   const tagsRef = useRef<string[]>(allTags);
@@ -436,6 +437,14 @@ export const SearchInput = memo(function SearchInput({
   useEffect(() => {
     submitRef.current = handleSubmit;
   }, [handleSubmit]);
+
+  // Focus the editor on initial mount for quick input
+  useEffect(() => {
+    if (editor && !hasFocusedOnceRef.current) {
+      editor.commands.focus("end");
+      hasFocusedOnceRef.current = true;
+    }
+  }, [editor]);
 
   const cancelEditingAndClear = useCallback(() => {
     if (!editingRef.current) return;

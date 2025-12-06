@@ -181,7 +181,10 @@ export const BookmarkList = memo(function BookmarkList({
           }
           transition={
             shouldAnimate
-              ? { duration: 0.15, delay: index < 20 ? index * 0.02 : 0 }
+              ? {
+                  duration: 0.15,
+                  delay: index < 20 ? index * 0.02 : 0,
+                }
               : undefined
           }
         >
