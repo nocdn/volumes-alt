@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bunx convex dev --once && concurrently -r bun:dev:convex bun:dev:web",
-    "build": "next build --webpack",
+    "build": "next build",
     "dev:web": "next dev",
     "dev:convex": "bunx convex dev",
     "start": "next start"
@@ -32,6 +32,7 @@
     "metascraper-title": "^5.49.7",
     "metascraper-url": "^5.49.7",
     "motion": "^12.23.25",
+    "re2": "npm:re2-wasm",
     "next": "^16.0.7",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",

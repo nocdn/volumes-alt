@@ -28,6 +28,7 @@
         "metascraper-url": "^5.49.7",
         "motion": "^12.23.25",
         "next": "^16.0.7",
+        "re2": "npm:re2-wasm",
         "react": "^19.2.1",
         "react-dom": "^19.2.1",
         "tailwind-merge": "^3.4.0",
@@ -1121,7 +1122,7 @@
 
     "quick-lru": ["quick-lru@5.1.1", "", {}, "sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA=="],
 
-    "re2": ["re2@1.22.3", "", { "dependencies": { "install-artifact-from-github": "^1.4.0", "nan": "^2.23.1", "node-gyp": "^11.5.0" } }, "sha512-002aE82U91DiaUA16U6vbiJusvPXn1OWiQukOxJkVUTXbzrSuQbFNHYKcGw8QK/uifRCfjl2Hd/vXYDanKkmaQ=="],
+    "re2": ["re2-wasm@1.0.2", "", {}, "sha512-VXUdgSiUrE/WZXn6gUIVVIsg0+Hp6VPZPOaHCay+OuFKy6u/8ktmeNEf+U5qSA8jzGGFsg8jrDNu1BeHpz2pJA=="],
 
     "reachable-url": ["reachable-url@1.8.3", "", { "dependencies": { "got": "~11.8.0", "p-reflect": "~2.1.0" } }, "sha512-qQnVOlFlTHBgFmOC5siHh17fcR9Zu7eNIBO95bJw3+Ln90raTY45h5mmHVmkKsukbA5z6ds/Me631VuQKAf2cw=="],
 
@@ -1364,6 +1365,8 @@
     "@isaacs/cliui/wrap-ansi": ["wrap-ansi@8.1.0", "", { "dependencies": { "ansi-styles": "^6.1.0", "string-width": "^5.0.1", "strip-ansi": "^7.0.1" } }, "sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ=="],
 
     "@keyvhq/memoize/null-prototype-object": ["null-prototype-object@1.0.0", "", {}, "sha512-VpnQAGu2aJ43ThI8G9JPB6hg6/G6u9gOyDXnZEJULQcjmXC5AzLHLBYlcc0Mp3g7s7zx58TfZ/v7PMS41Bs0bw=="],
+
+    "@metascraper/helpers/re2": ["re2@1.22.3", "", { "dependencies": { "install-artifact-from-github": "^1.4.0", "nan": "^2.23.1", "node-gyp": "^11.5.0" } }, "sha512-002aE82U91DiaUA16U6vbiJusvPXn1OWiQukOxJkVUTXbzrSuQbFNHYKcGw8QK/uifRCfjl2Hd/vXYDanKkmaQ=="],
 
     "@npmcli/agent/lru-cache": ["lru-cache@10.4.3", "", {}, "sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ=="],
 
