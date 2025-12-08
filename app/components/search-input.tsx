@@ -78,8 +78,8 @@ const SubmitButton = memo(function SubmitButton({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ duration: 0.2 }}
-    >
-      <Plus size={19} color="#7a7a7a" />
+          >
+            <Plus size={19} color="#7a7a7a" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -345,7 +345,7 @@ export const SearchInput = memo(function SearchInput({
       Mention.configure({
         HTMLAttributes: {
           class:
-            "bg-[rgba(88,5,255,0.05)] rounded-[0.4rem] text-[#6a00f5] px-[0.3rem] py-[0.125rem] text-[15.5px] box-decoration-clone capitalize",
+            "bg-[rgba(88,5,255,0.05)] rounded-[0.4rem] text-[#6a00f5] font-geist px-[0.3rem] pr-[0.4rem] py-[0.125rem] text-[15.5px] box-decoration-clone capitalize",
         },
         suggestion: mentionSuggestion,
       }),
@@ -531,7 +531,7 @@ export const SearchInput = memo(function SearchInput({
               className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.75 py-1 rounded-full relative group cursor-pointer"
               onClick={cancelEditingAndClear}
             >
-          Editing
+              Editing
               <div className="cursor-pointer absolute -right-2.5 -top-2 border-white border-2 p-0.75 rounded-full bg-[#F5F3FF] opacity-0 group-hover:opacity-100 transition-all duration-150">
                 <X size={12} color="#6A00F5" strokeWidth={2.75} />
               </div>
