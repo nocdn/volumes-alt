@@ -27,12 +27,16 @@ export function BookmarkApp() {
   const bookmarks = useQuery(api.bookmarks.list);
   const createBookmark = useMutation(api.bookmarks.createBookmark);
   const updateBookmark = useMutation(api.bookmarks.updateBookmark);
+  const deleteBookmark = useMutation(api.bookmarks.deleteBookmark);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingBookmark, setEditingBookmark] =
     useState<EditingBookmark | null>(null);
   const [pendingEdits, setPendingEdits] = useState<
     Map<Id<"bookmarks">, { url: string; title?: string | null; tags: string[] }>
   >(() => new Map());
+  const [pendingDeletions, setPendingDeletions] = useState<
+    Set<Id<"bookmarks">>
+  >(() => new Set());
   const [pendingCreations, setPendingCreations] = useState<Bookmark[]>([]);
   const [localBookmarks, setLocalBookmarks] = useState<Bookmark[] | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -62,17 +66,19 @@ export function BookmarkApp() {
 
   const bookmarksWithPending = useMemo(() => {
     if (!bookmarksWithPendingCreates) return [];
-    return bookmarksWithPendingCreates.map((bookmark) => {
-      const pending = pendingEdits.get(bookmark._id);
-      if (!pending) return bookmark;
-      return {
-        ...bookmark,
-        url: pending.url,
-        title: pending.title ?? bookmark.title,
-        tags: pending.tags,
-      };
-    });
-  }, [bookmarksWithPendingCreates, pendingEdits]);
+    return bookmarksWithPendingCreates
+      .filter((bookmark) => !pendingDeletions.has(bookmark._id))
+      .map((bookmark) => {
+        const pending = pendingEdits.get(bookmark._id);
+        if (!pending) return bookmark;
+        return {
+          ...bookmark,
+          url: pending.url,
+          title: pending.title ?? bookmark.title,
+          tags: pending.tags,
+        };
+      });
+  }, [bookmarksWithPendingCreates, pendingEdits, pendingDeletions]);
 
   // Filter bookmarks based on search query (title, url, tags)
   const filteredBookmarks = useMemo(() => {
@@ -232,6 +238,30 @@ export function BookmarkApp() {
     });
   }, []);
 
+  const handleDeleteEditing = useCallback(() => {
+    setEditingBookmark((current) => {
+      if (current) {
+        // Optimistically remove the bookmark from local state
+        setPendingDeletions((prev) => {
+          const next = new Set(prev);
+          next.add(current.id);
+          return next;
+        });
+
+        // Trigger actual deletion
+        deleteBookmark({ id: current.id }).catch((error) => {
+          console.error("Failed to delete editing bookmark", error);
+          setPendingDeletions((prev) => {
+            const next = new Set(prev);
+            next.delete(current.id);
+            return next;
+          });
+        });
+      }
+      return null;
+    });
+  }, [deleteBookmark]);
+
   const handleCancelEditing = useCallback(() => {
     setEditingBookmark((current) => {
       if (current) {
@@ -287,10 +317,15 @@ export function BookmarkApp() {
         onSubmit={handleSubmit}
         editingBookmark={editingBookmark}
         onCancelEditing={handleCancelEditing}
+        onDeleteEditing={handleDeleteEditing}
         isRefreshing={bookmarks === undefined}
       />
       <div className="h-8" /> {/* gap-8 equivalent */}
-      <BookmarkList bookmarks={filteredBookmarks} onEdit={handleEditBookmark} />
+      <BookmarkList
+        bookmarks={filteredBookmarks}
+        onEdit={handleEditBookmark}
+        pendingDeletions={pendingDeletions}
+      />
     </div>
   );
 }

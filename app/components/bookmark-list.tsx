@@ -194,15 +194,27 @@ const BookmarkItem = memo(function BookmarkItem({
 export const BookmarkList = memo(function BookmarkList({
   bookmarks,
   onEdit,
-}: BookmarkListProps) {
+  pendingDeletions: externalPendingDeletions,
+  onDelete: externalDelete,
+}: BookmarkListProps & {
+  pendingDeletions?: Set<Id<"bookmarks">>;
+  onDelete?: (id: Id<"bookmarks">) => void;
+}) {
   const deleteBookmark = useMutation(api.bookmarks.deleteBookmark);
-  const [pendingDeletions, setPendingDeletions] = useState<
+  const [internalPendingDeletions, setInternalPendingDeletions] = useState<
     Set<Id<"bookmarks">>
   >(() => new Set());
 
+  const pendingDeletions = externalPendingDeletions || internalPendingDeletions;
+
   const handleDelete = useCallback(
     (id: Id<"bookmarks">) => {
-      setPendingDeletions((prev) => {
+      if (externalDelete) {
+        externalDelete(id);
+        return;
+      }
+
+      setInternalPendingDeletions((prev) => {
         const next = new Set(prev);
         next.add(id);
         return next;
@@ -210,14 +222,14 @@ export const BookmarkList = memo(function BookmarkList({
 
       deleteBookmark({ id }).catch((error) => {
         console.error("Failed to delete bookmark", error);
-        setPendingDeletions((prev) => {
+        setInternalPendingDeletions((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
         });
       });
     },
-    [deleteBookmark]
+    [deleteBookmark, externalDelete]
   );
 
   const visibleBookmarks = useMemo(
