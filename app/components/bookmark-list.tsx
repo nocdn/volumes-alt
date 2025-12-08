@@ -184,7 +184,7 @@ const BookmarkItem = memo(function BookmarkItem({
       </span>
 
       {/* Date */}
-      <span className="ml-auto text-sm tabular-nums font-rounded text-gray-400 shrink-0">
+      <span className="ml-auto text-sm tabular-nums font-rounded text-gray-400 shrink-0 hidden sm:inline">
         {formattedDate}
       </span>
     </div>
@@ -254,7 +254,7 @@ export const BookmarkList = memo(function BookmarkList({
   // }
 
   return (
-    <div className="flex flex-col gap-4 w-[50%] px-1">
+    <div className="flex flex-col gap-4 w-[80%] md:max-w-[50%] px-1">
       {bookmarksWithDates.map(({ bookmark, formattedDate }, index) => (
         <motion.div
           key={bookmark._id}

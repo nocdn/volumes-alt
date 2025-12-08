@@ -315,6 +315,7 @@ export const SearchInput = memo(function SearchInput({
   const submitRef = useRef<(() => Promise<void>) | undefined>(undefined);
   const editingRef = useRef<typeof editingBookmark>(null);
   const hasFocusedOnceRef = useRef(false);
+  const [hasContent, setHasContent] = useState(false);
 
   // Use a ref to always access the latest tags without recreating the editor
   const tagsRef = useRef<string[]>(allTags);
@@ -368,6 +369,7 @@ export const SearchInput = memo(function SearchInput({
     onUpdate: ({ editor }) => {
       const { text } = extractContentFromEditor(editor);
       onSearchChange(text);
+      setHasContent(text.length > 0);
     },
     immediatelyRender: false,
   });
@@ -426,6 +428,7 @@ export const SearchInput = memo(function SearchInput({
       editor.commands.clearContent();
       onSearchChange("");
       onClearSearch?.();
+      setHasContent(false);
 
       await onSubmit(
         urlCandidate,
@@ -456,6 +459,7 @@ export const SearchInput = memo(function SearchInput({
     editor?.commands.clearContent();
     onSearchChange("");
     onCancelEditing?.();
+    setHasContent(false);
   }, [editor, onCancelEditing, onSearchChange]);
 
   const handleEditorKeyDown = useCallback(
@@ -501,6 +505,7 @@ export const SearchInput = memo(function SearchInput({
       });
 
       editor.commands.focus("end");
+      setHasContent(true);
     },
     [editor]
   );
@@ -512,7 +517,7 @@ export const SearchInput = memo(function SearchInput({
   }, [editingBookmark, setEditorContentFromBookmark]);
 
   return (
-    <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[50%] px-5 py-5 flex flex-col gap-4">
+    <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[80%] md:max-w-[50%] px-5 py-5 flex flex-col gap-4">
       {/* Top row: Search icon + Input */}
       <div className="flex items-start gap-2">
         <Search size={17} color="gray" className="mt-1 shrink-0" />
@@ -526,7 +531,7 @@ export const SearchInput = memo(function SearchInput({
       {/* Bottom row: editing pill on left, plus button on right */}
       <div className="flex items-center justify-between">
         <div className="min-h-[28px] flex items-center">
-          {editingBookmark ? (
+          {editingBookmark && hasContent ? (
             <div
               className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.75 py-1 rounded-full relative group cursor-pointer"
               onClick={cancelEditingAndClear}
