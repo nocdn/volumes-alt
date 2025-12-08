@@ -77,6 +77,8 @@ export function BookmarkApp() {
   // Filter bookmarks based on search query (title, url, tags)
   const filteredBookmarks = useMemo(() => {
     if (!bookmarksWithPending) return [];
+    // When editing, show all bookmarks (no filtering)
+    if (editingBookmark) return bookmarksWithPending;
     if (!searchQuery.trim()) return bookmarksWithPending;
 
     const query = searchQuery.toLowerCase().trim();
@@ -88,7 +90,7 @@ export function BookmarkApp() {
       );
       return titleMatch || urlMatch || tagMatch;
     });
-  }, [bookmarksWithPending, searchQuery]);
+  }, [bookmarksWithPending, searchQuery, editingBookmark]);
 
   const handleSearchChange = useCallback((query: string) => {
     startTransition(() => {

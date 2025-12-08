@@ -358,7 +358,7 @@ export const SearchInput = memo(function SearchInput({
           "outline-none font-[var(--font-inter)] text-base leading-relaxed min-h-[1.5rem] flex-1",
       },
       handleKeyDown: (_view, event) => {
-        if (event.key === "Enter" && event.metaKey) {
+        if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           submitRef.current?.();
           return true;
