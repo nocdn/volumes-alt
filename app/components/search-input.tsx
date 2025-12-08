@@ -512,13 +512,13 @@ export const SearchInput = memo(function SearchInput({
   }, [editingBookmark, setEditorContentFromBookmark]);
 
   return (
-    <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[50%] h-28 px-5 py-5 flex flex-col justify-between">
+    <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[50%] px-5 py-5 flex flex-col gap-4">
       {/* Top row: Search icon + Input */}
       <div className="flex items-start gap-2">
         <Search size={17} color="gray" className="mt-1 shrink-0" />
         <EditorContent
           editor={editor}
-          className="flex-1"
+          className="flex-1 whitespace-pre-wrap wrap-break-word"
           onKeyDown={handleEditorKeyDown}
         />
       </div>
