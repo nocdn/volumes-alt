@@ -32,10 +32,11 @@
     "metascraper-title": "^5.49.7",
     "metascraper-url": "^5.49.7",
     "motion": "^12.23.25",
-    "re2": "npm:re2-wasm",
     "next": "^16.0.7",
+    "re2": "npm:re2-wasm",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

@@ -50,6 +50,27 @@ const BookmarkItem = memo(function BookmarkItem({
   onEdit?: (bookmark: Bookmark) => void;
 }) {
   const isFetchingPlaceholder = bookmark.title === "Fetching title";
+  const hoverTimerRef = useRef<number | null>(null);
+  const [showTags, setShowTags] = useState(false);
+
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
+
+  const handleFaviconHoverStart = useCallback(() => {
+    clearHoverTimer();
+    hoverTimerRef.current = window.setTimeout(() => {
+      setShowTags(true);
+    }, 200);
+  }, [clearHoverTimer]);
+
+  const handleFaviconHoverEnd = useCallback(() => {
+    clearHoverTimer();
+    setShowTags(false);
+  }, [clearHoverTimer]);
 
   const handleFaviconClick = useCallback(
     (e: React.MouseEvent) => {
@@ -71,26 +92,45 @@ const BookmarkItem = memo(function BookmarkItem({
   return (
     <div className="flex items-center gap-3 group">
       {/* Favicon */}
-      {isFetchingPlaceholder ? (
-        <div
-          className="shrink-0 w-3.5 h-3.5 rounded-full bg-[#E0E8FF] animate-pulse"
-          onClick={handleFaviconClick}
-        />
-      ) : (
-        <img
-          src={bookmark.favicon}
-          alt=""
-          width={16}
-          height={16}
-          className="shrink-0 cursor-pointer"
-          onClick={handleFaviconClick}
-          onError={(e) => {
-            // Fallback to a default icon on error
-            (e.target as HTMLImageElement).src =
-              "https://www.google.com/s2/favicons?domain=example.com&sz=128";
-          }}
-        />
-      )}
+      <div className="relative">
+        {isFetchingPlaceholder ? (
+          <div
+            className="shrink-0 w-3.5 h-3.5 rounded-full bg-[#E0E8FF] animate-pulse"
+            onClick={handleFaviconClick}
+            onMouseEnter={handleFaviconHoverStart}
+            onMouseLeave={handleFaviconHoverEnd}
+          />
+        ) : (
+          <img
+            src={bookmark.favicon}
+            alt=""
+            width={16}
+            height={16}
+            className="shrink-0 cursor-pointer"
+            onClick={handleFaviconClick}
+            onMouseEnter={handleFaviconHoverStart}
+            onMouseLeave={handleFaviconHoverEnd}
+            onError={(e) => {
+              // Fallback to a default icon on error
+              (e.target as HTMLImageElement).src =
+                "https://www.google.com/s2/favicons?domain=example.com&sz=128";
+            }}
+          />
+        )}
+
+        {showTags && bookmark.tags.length > 0 && (
+          <div className="absolute left-0 top-full mt-2 z-10 bg-white border border-[#ECEDED] rounded-2xl shadow-[0_12px_33px_0_rgba(0,0,0,0.06),0_3.618px_9.949px_0_rgba(0,0,0,0.04)] px-3 py-2 flex flex-wrap gap-1.5 min-w-[140px]">
+            {bookmark.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-xs px-2 py-1 rounded-full bg-[#F5F3FF] text-[#6A00F5] font-medium capitalize"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Title */}
       <span
