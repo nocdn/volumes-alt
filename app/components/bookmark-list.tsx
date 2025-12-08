@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useMemo, useRef, useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
@@ -49,7 +49,10 @@ const BookmarkItem = memo(function BookmarkItem({
   onDelete: (id: Id<"bookmarks">) => void;
   onEdit?: (bookmark: Bookmark) => void;
 }) {
-  const isFetchingPlaceholder = bookmark.title === "Fetching title";
+  const isOptimistic =
+    typeof bookmark._id === "string" &&
+    (bookmark._id as unknown as string).startsWith("temp-");
+  const isFetchingPlaceholder = isOptimistic;
   const hoverTimerRef = useRef<number | null>(null);
   const [showTags, setShowTags] = useState(false);
 
@@ -61,11 +64,12 @@ const BookmarkItem = memo(function BookmarkItem({
   }, []);
 
   const handleFaviconHoverStart = useCallback(() => {
+    if (bookmark.tags.length === 0) return;
     clearHoverTimer();
     hoverTimerRef.current = window.setTimeout(() => {
       setShowTags(true);
-    }, 200);
-  }, [clearHoverTimer]);
+    }, 80);
+  }, [clearHoverTimer, bookmark.tags.length]);
 
   const handleFaviconHoverEnd = useCallback(() => {
     clearHoverTimer();
@@ -92,56 +96,84 @@ const BookmarkItem = memo(function BookmarkItem({
   return (
     <div className="flex items-center gap-3 group">
       {/* Favicon */}
-      <div className="relative">
-        {isFetchingPlaceholder ? (
-          <div
-            className="shrink-0 w-3.5 h-3.5 rounded-full bg-[#E0E8FF] animate-pulse"
-            onClick={handleFaviconClick}
-            onMouseEnter={handleFaviconHoverStart}
-            onMouseLeave={handleFaviconHoverEnd}
-          />
-        ) : (
-          <img
-            src={bookmark.favicon}
-            alt=""
-            width={16}
-            height={16}
-            className="shrink-0 cursor-pointer"
-            onClick={handleFaviconClick}
-            onMouseEnter={handleFaviconHoverStart}
-            onMouseLeave={handleFaviconHoverEnd}
-            onError={(e) => {
-              // Fallback to a default icon on error
-              (e.target as HTMLImageElement).src =
-                "https://www.google.com/s2/favicons?domain=example.com&sz=128";
-            }}
-          />
-        )}
+      {isFetchingPlaceholder ? (
+        <div
+          className="shrink-0 w-3.5 h-3.5 rounded-full bg-[#E0E8FF] animate-pulse cursor-pointer"
+          onClick={handleFaviconClick}
+          onMouseEnter={handleFaviconHoverStart}
+          onMouseLeave={handleFaviconHoverEnd}
+        />
+      ) : (
+        <img
+          src={bookmark.favicon}
+          alt=""
+          width={16}
+          height={16}
+          className="shrink-0 cursor-pointer"
+          onClick={handleFaviconClick}
+          onMouseEnter={handleFaviconHoverStart}
+          onMouseLeave={handleFaviconHoverEnd}
+          onError={(e) => {
+            // Fallback to a default icon on error
+            (e.target as HTMLImageElement).src =
+              "https://www.google.com/s2/favicons?domain=example.com&sz=128";
+          }}
+        />
+      )}
 
-        {showTags && bookmark.tags.length > 0 && (
-          <div className="absolute left-0 top-full mt-2 z-10 bg-white border border-[#ECEDED] rounded-2xl shadow-[0_12px_33px_0_rgba(0,0,0,0.06),0_3.618px_9.949px_0_rgba(0,0,0,0.04)] px-3 py-2 flex flex-wrap gap-1.5 min-w-[140px]">
-            {bookmark.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-2 py-1 rounded-full bg-[#F5F3FF] text-[#6A00F5] font-medium capitalize"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+      {/* Title / Tags - grid overlay for smooth transition */}
+      <div className="grid flex-1 min-w-0">
+        {/* Title - fades out when tags show */}
+        <div
+          className="cursor-pointer truncate"
+          style={{
+            gridArea: "1/1",
+            opacity: showTags ? 0 : 1,
+            transition: "opacity 0.15s ease-out",
+          }}
+          onClick={handleTitleClick}
+        >
+          <span
+            className={`font-inter text-base ${
+              bookmark.title === "Fetching title" ? "text-gray-400" : ""
+            }`}
+            style={{ fontWeight: 400 }}
+          >
+            {bookmark.title}
+          </span>
+        </div>
+
+        {/* Tags - stagger in when hovering */}
+        <AnimatePresence>
+          {showTags && bookmark.tags.length > 0 && (
+            <motion.div
+              className="flex items-center gap-1.5 overflow-hidden"
+              style={{ gridArea: "1/1" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+            >
+              {bookmark.tags.map((tag, index) => (
+                <motion.span
+                  key={tag}
+                  className="text-[13px] px-2.5 py-[2.5px] rounded-lg bg-[#F5F3FF] text-[#6A00F5] font-[450] capitalize shrink-0"
+                  style={{ letterSpacing: "0.02em" }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{
+                    duration: 0.12,
+                    delay: index * 0.04,
+                  }}
+                >
+                  {tag}
+                </motion.span>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Title */}
-      <span
-        onClick={handleTitleClick}
-        className={`font-inter text-base cursor-pointer truncate flex-1 ${
-          bookmark.title === "Fetching title" ? "text-gray-400" : ""
-        }`}
-        style={{ fontWeight: 400 }}
-      >
-        {bookmark.title}
-      </span>
 
       {/* Delete Button */}
       <span

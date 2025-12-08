@@ -111,6 +111,7 @@ export function BookmarkApp() {
 
       const normalizedUrl = url.includes("://") ? url : `https://${url}`;
       const optimisticTitle = titleFromInput?.trim() || normalizedUrl;
+      const optimisticDisplayTitle = titleFromInput?.trim() || "Fetching title";
       const getHostname = (input: string): string | null => {
         try {
           const parsed = new URL(
@@ -147,7 +148,7 @@ export function BookmarkApp() {
           _id: tempId,
           _creationTime: Date.now(),
           url: normalizedUrl,
-          title: "Fetching title",
+          title: optimisticDisplayTitle,
           tags,
           favicon: fallbackFavicon,
         };
