@@ -303,6 +303,8 @@ function extractContentFromEditor(editor: ReturnType<typeof useEditor>): {
   return { text: text.trim(), mentions, parts };
 }
 
+import { useIsMobile } from "../hooks/use-mobile";
+
 export const SearchInput = memo(function SearchInput({
   allTags,
   onSearchChange,
@@ -313,6 +315,7 @@ export const SearchInput = memo(function SearchInput({
   onDeleteEditing,
   isRefreshing,
 }: SearchInputProps) {
+  const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitRef = useRef<(() => Promise<void>) | undefined>(undefined);
   const editingRef = useRef<typeof editingBookmark>(null);
@@ -360,10 +363,16 @@ export const SearchInput = memo(function SearchInput({
           "outline-none font-[var(--font-inter)] text-base leading-relaxed min-h-[1.5rem] flex-1",
       },
       handleKeyDown: (_view, event) => {
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          submitRef.current?.();
-          return true;
+        if (event.key === "Enter") {
+          // On mobile, don't submit via Enter key (require button press)
+          if (isMobile) return false;
+
+          // On desktop, require Cmd+Enter to submit
+          if (event.metaKey) {
+            event.preventDefault();
+            submitRef.current?.();
+            return true;
+          }
         }
         return false;
       },
