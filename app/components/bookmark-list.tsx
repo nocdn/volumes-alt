@@ -125,7 +125,7 @@ const BookmarkItem = memo(function BookmarkItem({
       )}
 
       {/* Title / Tags - grid overlay for smooth transition */}
-      <div className="grid flex-1 min-w-0">
+      <div className="grid flex-1 min-w-0 ">
         {/* Title - fades out when tags show */}
         <div
           className="cursor-pointer truncate"
@@ -140,7 +140,7 @@ const BookmarkItem = memo(function BookmarkItem({
             className={`font-inter text-base ${
               bookmark.title === "Fetching title" ? "text-gray-400" : ""
             }`}
-            style={{ fontWeight: 400 }}
+            style={{ fontWeight: isMobile ? 470 : 400 }}
           >
             {bookmark.title}
           </span>
