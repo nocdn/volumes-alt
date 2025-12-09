@@ -361,6 +361,9 @@ export const SearchInput = memo(function SearchInput({
       attributes: {
         class:
           "outline-none font-[var(--font-inter)] text-base leading-relaxed min-h-[1.5rem] flex-1",
+        autocapitalize: "off",
+        autocorrect: "off",
+        style: `font-weight: ${isMobile ? 500 : 420};`,
       },
       handleKeyDown: (_view, event) => {
         if (event.key === "Enter") {
