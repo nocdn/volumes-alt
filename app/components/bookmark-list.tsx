@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
+import { useIsMobile } from "../hooks/use-mobile";
 
 // Type for bookmark from Convex
 type Bookmark = Doc<"bookmarks"> & { _creationTime: number };
@@ -55,6 +56,7 @@ const BookmarkItem = memo(function BookmarkItem({
   const isFetchingPlaceholder = isOptimistic;
   const hoverTimerRef = useRef<number | null>(null);
   const [showTags, setShowTags] = useState(false);
+  const isMobile = useIsMobile();
 
   const clearHoverTimer = useCallback(() => {
     if (hoverTimerRef.current !== null) {
@@ -64,12 +66,13 @@ const BookmarkItem = memo(function BookmarkItem({
   }, []);
 
   const handleFaviconHoverStart = useCallback(() => {
+    if (isMobile) return;
     if (bookmark.tags.length === 0) return;
     clearHoverTimer();
     hoverTimerRef.current = window.setTimeout(() => {
       setShowTags(true);
     }, 80);
-  }, [clearHoverTimer, bookmark.tags.length]);
+  }, [clearHoverTimer, bookmark.tags.length, isMobile]);
 
   const handleFaviconHoverEnd = useCallback(() => {
     clearHoverTimer();
@@ -266,7 +269,7 @@ export const BookmarkList = memo(function BookmarkList({
   // }
 
   return (
-    <div className="flex flex-col gap-4 w-[80%] md:max-w-[50%] px-1">
+    <div className="flex flex-col gap-4 w-[85%] md:max-w-[50%] px-1">
       {bookmarksWithDates.map(({ bookmark, formattedDate }, index) => (
         <motion.div
           key={bookmark._id}
