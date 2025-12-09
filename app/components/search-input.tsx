@@ -528,7 +528,7 @@ export const SearchInput = memo(function SearchInput({
   }, [editingBookmark, setEditorContentFromBookmark]);
 
   return (
-    <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[80%] md:max-w-[50%] px-5 py-5 flex flex-col gap-4">
+    <div className="rounded-3xl supports-[corner-shape:squircle]:rounded-4xl supports-[corner-shape:squircle]:[corner-shape:squircle] bg-[#FEFFFF] border border-[#ECEDED] w-[80%] md:max-w-[50%] px-5 py-5 flex flex-col gap-4">
       {/* Top row: Search icon + Input */}
       <div className="flex items-start gap-2">
         <Search size={17} color="gray" className="mt-1 shrink-0" />
