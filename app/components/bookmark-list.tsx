@@ -177,7 +177,7 @@ const BookmarkItem = memo(function BookmarkItem({
 
       {/* Delete Button */}
       <span
-        className="text-sm text-[#FD2B38] cursor-pointer transition-all font-medium duration-100 font-rounded opacity-0 group-hover:opacity-100"
+        className="text-sm text-[#FD2B38] cursor-pointer transition-all font-medium duration-100 font-rounded opacity-0 group-hover:opacity-100 hidden md:inline"
         onClick={handleDeleteClick}
       >
         Delete
