@@ -17,6 +17,7 @@ import {
   ReactRenderer,
   posToDOMRect,
 } from "@tiptap/react";
+import Link from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import Mention from "@tiptap/extension-mention";
 import type { SuggestionProps } from "@tiptap/suggestion";
@@ -354,6 +355,14 @@ export const SearchInput = memo(function SearchInput({
             "bg-[rgba(88,5,255,0.05)] rounded-[0.4rem] text-[#6a00f5] font-geist px-[0.3rem] pr-[0.4rem] py-[0.125rem] text-[15.5px] box-decoration-clone capitalize",
         },
         suggestion: mentionSuggestion,
+      }),
+      Link.configure({
+        autolink: true, // Default is true, but good to be explicit
+        openOnClick: false, // Prevents accidentally opening links while editing
+        HTMLAttributes: {
+          // This class will be applied to all links
+          class: "text-blue-600 cursor-pointer hover:text-blue-600/80",
+        },
       }),
     ],
     content: "",
