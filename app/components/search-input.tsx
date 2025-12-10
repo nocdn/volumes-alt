@@ -500,10 +500,32 @@ export const SearchInput = memo(function SearchInput({
     (bookmark: NonNullable<SearchInputProps["editingBookmark"]>) => {
       if (!editor) return;
 
-      const paragraphContent: Array<
-        | { type: "text"; text: string }
-        | { type: "mention"; attrs: { id: string } }
-      > = [{ type: "text", text: bookmark.url }];
+      type ParagraphNode =
+        | {
+            type: "text";
+            text: string;
+            marks?: Array<{ type: "link"; attrs: { href: string } }>;
+          }
+        | { type: "mention"; attrs: { id: string } };
+
+      const urlText = bookmark.url;
+
+      const paragraphContent: ParagraphNode[] = [
+        {
+          type: "text",
+          text: urlText,
+          marks: urlText
+            ? [
+                {
+                  type: "link",
+                  attrs: {
+                    href: urlText,
+                  },
+                },
+              ]
+            : undefined,
+        },
+      ];
 
       for (const tag of bookmark.tags) {
         paragraphContent.push({ type: "text", text: " " });
@@ -554,27 +576,37 @@ export const SearchInput = memo(function SearchInput({
       {/* Bottom row: editing pill on left, plus button on right */}
       <div className="flex items-center justify-between">
         <div className="min-h-[28px] flex items-center gap-2">
-          {editingBookmark && hasContent ? (
-            <>
-              <div
-                className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.75 py-1 rounded-full relative group cursor-pointer"
-                onClick={cancelEditingAndClear}
+          <AnimatePresence initial={false}>
+            {editingBookmark && hasContent ? (
+              <motion.div
+                key="editing-chip"
+                initial={{ opacity: 0, scale: 0.95, filter: "blur(1px)" }}
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.95, filter: "blur(1px)" }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
               >
-                Editing
-                <div className="cursor-pointer absolute -right-2.5 -top-2 border-white border-2 p-0.75 rounded-full bg-[#F5F3FF] opacity-0 group-hover:opacity-100 transition-all duration-150">
-                  <X size={12} color="#6A00F5" strokeWidth={2.75} />
+                <div
+                  className="bg-[#F5F3FF] text-[#6A00F5] text-sm font-medium font-rounded px-2.75 py-1 rounded-full relative group cursor-pointer"
+                  onClick={cancelEditingAndClear}
+                >
+                  Editing
+                  <div className="cursor-pointer absolute -right-2.5 -top-2 border-white border-2 p-0.75 rounded-full bg-[#F5F3FF] opacity-0 group-hover:opacity-100 transition-all duration-150">
+                    <X size={12} color="#6A00F5" strokeWidth={2.75} />
+                  </div>
                 </div>
-              </div>
-              <div
-                className="bg-[#FFF0F0] text-[#FD2B38] text-sm font-medium font-rounded px-2.75 py-1 rounded-full cursor-pointer md:hidden"
-                onClick={() => {
-                  onDeleteEditing?.();
-                  cancelEditingAndClear();
-                }}
-              >
-                Delete
-              </div>
-            </>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+          {editingBookmark && hasContent ? (
+            <div
+              className="bg-[#FFF0F0] text-[#FD2B38] text-sm font-medium font-rounded px-2.75 py-1 rounded-full cursor-pointer md:hidden"
+              onClick={() => {
+                onDeleteEditing?.();
+                cancelEditingAndClear();
+              }}
+            >
+              Delete
+            </div>
           ) : null}
         </div>
         <SubmitButton
