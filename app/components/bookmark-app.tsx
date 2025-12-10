@@ -2,13 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import {
-  useMemo,
-  useCallback,
-  useState,
-  useTransition,
-  useEffect,
-} from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { SearchInput } from "./search-input";
 import { BookmarkList } from "./bookmark-list";
@@ -39,7 +33,6 @@ export function BookmarkApp() {
   >(() => new Set());
   const [pendingCreations, setPendingCreations] = useState<Bookmark[]>([]);
   const [localBookmarks, setLocalBookmarks] = useState<Bookmark[] | null>(null);
-  const [isPending, startTransition] = useTransition();
   const CACHE_KEY = "bookmark-cache-v1";
 
   // Extract all unique tags from bookmarks for mention suggestions
@@ -99,9 +92,7 @@ export function BookmarkApp() {
   }, [bookmarksWithPending, searchQuery, editingBookmark]);
 
   const handleSearchChange = useCallback((query: string) => {
-    startTransition(() => {
-      setSearchQuery(query);
-    });
+    setSearchQuery(query);
   }, []);
 
   const handleClearSearch = useCallback(() => {

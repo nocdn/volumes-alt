@@ -281,7 +281,7 @@ export const BookmarkList = memo(function BookmarkList({
             shouldAnimate
               ? {
                   duration: 0.15,
-                  delay: index < 20 ? index * 0.02 : 0,
+                  delay: index < 30 ? index * 0.02 : 0,
                 }
               : undefined
           }
