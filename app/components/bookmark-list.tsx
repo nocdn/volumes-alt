@@ -249,14 +249,31 @@ export const BookmarkList = memo(function BookmarkList({
   }, [visibleBookmarks]);
 
   // Only animate on first load; subsequent renders are instant.
+  // Use a ref that flips after a delay to ensure all initial items animate,
+  // even if data arrives in chunks.
   const hasAnimatedRef = useRef(false);
-  const shouldAnimate = !hasAnimatedRef.current;
+  const [shouldAnimate, setShouldAnimate] = useState(true);
 
   useEffect(() => {
-    if (shouldAnimate && bookmarksWithDates.length > 0) {
+    if (hasAnimatedRef.current) return;
+    if (bookmarksWithDates.length > 0) {
       hasAnimatedRef.current = true;
+      // Wait for stagger animation to complete before disabling animations
+      const staggerLimit = 30;
+      const staggerDelay = 0.02;
+      const animationDuration = 0.15;
+      const totalAnimationTime =
+        (Math.min(bookmarksWithDates.length, staggerLimit) - 1) * staggerDelay +
+        animationDuration;
+      const timer = setTimeout(
+        () => {
+          setShouldAnimate(false);
+        },
+        totalAnimationTime * 1000 + 100
+      ); // +100ms buffer
+      return () => clearTimeout(timer);
     }
-  }, [bookmarksWithDates.length, shouldAnimate]);
+  }, [bookmarksWithDates.length]);
 
   // if (visibleBookmarks.length === 0) {
   //   return (
@@ -270,30 +287,39 @@ export const BookmarkList = memo(function BookmarkList({
 
   return (
     <div className="flex flex-col gap-4 w-[85%] md:max-w-[50%] px-1">
-      {bookmarksWithDates.map(({ bookmark, formattedDate }, index) => (
-        <motion.div
-          key={bookmark._id}
-          initial={shouldAnimate ? { opacity: 0, filter: "blur(1px)" } : false}
-          animate={
-            shouldAnimate ? { opacity: 1, filter: "blur(0px)" } : undefined
-          }
-          transition={
-            shouldAnimate
-              ? {
-                  duration: 0.15,
-                  delay: index < 30 ? index * 0.02 : 0,
-                }
-              : undefined
-          }
-        >
-          <BookmarkItem
-            bookmark={bookmark}
-            formattedDate={formattedDate}
-            onDelete={handleDelete}
-            onEdit={onEdit}
-          />
-        </motion.div>
-      ))}
+      {bookmarksWithDates.map(({ bookmark, formattedDate }, index) => {
+        // Only stagger-animate the first N items; the rest appear instantly
+        const staggerLimit = 30;
+        const staggerDelay = 0.02;
+        const shouldStagger = shouldAnimate && index < staggerLimit;
+
+        return (
+          <motion.div
+            key={bookmark._id}
+            initial={
+              shouldStagger ? { opacity: 0, filter: "blur(1px)" } : false
+            }
+            animate={
+              shouldStagger ? { opacity: 1, filter: "blur(0px)" } : undefined
+            }
+            transition={
+              shouldStagger
+                ? {
+                    duration: 0.15,
+                    delay: index * staggerDelay,
+                  }
+                : undefined
+            }
+          >
+            <BookmarkItem
+              bookmark={bookmark}
+              formattedDate={formattedDate}
+              onDelete={handleDelete}
+              onEdit={onEdit}
+            />
+          </motion.div>
+        );
+      })}
     </div>
   );
 });
