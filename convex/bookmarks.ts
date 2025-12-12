@@ -14,9 +14,14 @@ export const updateBookmark = mutation({
     title: v.optional(v.string()),
     url: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    favicon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
+    const existing = await ctx.db.get(id);
+    if (!existing) {
+      throw new Error("Bookmark not found");
+    }
     // Filter out undefined values
     const filteredUpdates: {
       title?: string;
@@ -26,24 +31,36 @@ export const updateBookmark = mutation({
     } = {};
     if (updates.title !== undefined) filteredUpdates.title = updates.title;
     if (updates.tags !== undefined) filteredUpdates.tags = updates.tags;
+    if (updates.favicon !== undefined)
+      filteredUpdates.favicon = updates.favicon;
     if (updates.url !== undefined) {
-      filteredUpdates.url = updates.url;
-      // Update favicon if URL changed
-      function getHostname(input: string): string | null {
-        try {
-          const url = new URL(
-            input.includes("://") ? input : `https://${input}`
-          );
-          return url.hostname;
-        } catch {
-          return null;
+      // Only update favicon when the URL actually changes.
+      if (updates.url !== existing.url) {
+        filteredUpdates.url = updates.url;
+
+        function getHostname(input: string): string | null {
+          try {
+            const url = new URL(
+              input.includes("://") ? input : `https://${input}`
+            );
+            return url.hostname;
+          } catch {
+            return null;
+          }
+        }
+
+        // If the caller didn't explicitly set a favicon, compute a sensible fallback.
+        if (updates.favicon === undefined) {
+          const hostname = getHostname(updates.url);
+          filteredUpdates.favicon = hostname
+            ? `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`
+            : "https://www.google.com/s2/favicons?domain=example.com&sz=128";
         }
       }
-      const hostname = getHostname(updates.url);
-      filteredUpdates.favicon = hostname
-        ? `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`
-        : "https://www.google.com/s2/favicons?domain=example.com&sz=128";
     }
+
+    if (Object.keys(filteredUpdates).length === 0) return;
+
     await ctx.db.patch(id, filteredUpdates);
   },
 });

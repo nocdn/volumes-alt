@@ -15,6 +15,7 @@ type EditingBookmark = {
   url: string;
   title?: string | null;
   tags: string[];
+  favicon?: string;
 };
 
 export function BookmarkApp() {
@@ -25,6 +26,7 @@ export function BookmarkApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingBookmark, setEditingBookmark] =
     useState<EditingBookmark | null>(null);
+  const [isRefreshingFavicon, setIsRefreshingFavicon] = useState(false);
   const [pendingEdits, setPendingEdits] = useState<
     Map<Id<"bookmarks">, { url: string; title?: string | null; tags: string[] }>
   >(() => new Map());
@@ -226,8 +228,28 @@ export function BookmarkApp() {
       url: bookmark.url,
       title: bookmark.title,
       tags: bookmark.tags,
+      favicon: bookmark.favicon,
     });
   }, []);
+
+  const handleRefreshFavicon = useCallback(async () => {
+    if (!editingBookmark || isRefreshingFavicon) return;
+    setIsRefreshingFavicon(true);
+    try {
+      const metadata = await getPageMetadata(editingBookmark.url);
+      const nextFavicon = metadata.logo?.trim();
+      if (!nextFavicon) return;
+
+      await updateBookmark({
+        id: editingBookmark.id,
+        favicon: nextFavicon,
+      });
+    } catch (error) {
+      console.error("Failed to refresh favicon", error);
+    } finally {
+      setIsRefreshingFavicon(false);
+    }
+  }, [editingBookmark, isRefreshingFavicon, updateBookmark]);
 
   const handleDeleteEditing = useCallback(() => {
     setEditingBookmark((current) => {
@@ -309,6 +331,8 @@ export function BookmarkApp() {
         editingBookmark={editingBookmark}
         onCancelEditing={handleCancelEditing}
         onDeleteEditing={handleDeleteEditing}
+        onRefreshFavicon={handleRefreshFavicon}
+        isRefreshingFavicon={isRefreshingFavicon}
         isRefreshing={bookmarks === undefined}
       />
       <div className="h-8" /> {/* gap-8 equivalent */}
