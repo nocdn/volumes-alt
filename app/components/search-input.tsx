@@ -327,6 +327,7 @@ export const SearchInput = memo(function SearchInput({
   const editingRef = useRef<typeof editingBookmark>(null);
   const hasFocusedOnceRef = useRef(false);
   const [hasContent, setHasContent] = useState(false);
+  const [faviconRotationKey, setFaviconRotationKey] = useState(0);
 
   // Use a ref to always access the latest tags without recreating the editor
   const tagsRef = useRef<string[]>(allTags);
@@ -609,27 +610,33 @@ export const SearchInput = memo(function SearchInput({
                 initial={{ opacity: 0, scale: 0.95, filter: "blur(1px)" }}
                 animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                 exit={{ opacity: 0, scale: 0.95, filter: "blur(1px)" }}
+                whileTap={{ scale: 0.95, opacity: 0.6 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 <div
                   className="bg-[#EFF6FF] text-[#2563EB] text-sm font-medium font-rounded px-2.75 py-1 rounded-full relative group cursor-pointer"
                   onClick={() => {
+                    setFaviconRotationKey((k) => k + 1);
                     onRefreshFavicon?.();
                   }}
                 >
                   Favicon
                   <div className="cursor-pointer absolute -right-2.5 -top-2 border-white border-2 p-0.75 rounded-full bg-[#EFF6FF] opacity-0 group-hover:opacity-100 transition-all duration-150">
-                    <RefreshCcw
-                      size={12}
-                      color="#2563EB"
-                      strokeWidth={2.75}
-                      className={isRefreshingFavicon ? "animate-spin" : ""}
-                      style={
-                        isRefreshingFavicon
-                          ? { animationDuration: "0.666s" }
-                          : undefined
-                      }
-                    />
+                    <motion.div
+                      key={faviconRotationKey}
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1.5,
+                        ease: [0.19, 1, 0.22, 1],
+                      }}
+                    >
+                      <RefreshCcw
+                        size={12}
+                        color="#2563EB"
+                        strokeWidth={2.75}
+                      />
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
