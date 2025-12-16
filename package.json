@@ -35,7 +35,7 @@
     "metascraper-url": "^5.49.7",
     "motion": "^12.23.26",
     "next": "^16.0.10",
-    "re2": "^1.0.2",
+    "re2": "npm:re2-wasm",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sonner": "^2.0.7",
