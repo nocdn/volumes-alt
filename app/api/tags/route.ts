@@ -31,7 +31,10 @@ export async function GET() {
       a.localeCompare(b, undefined, { sensitivity: "base" })
     );
 
-    return NextResponse.json(tags);
+    return NextResponse.json({
+      structured: tags,
+      list: tags.join(", ")
+    });
   } catch (error) {
     console.error("Failed to fetch tags via API", error);
     return new NextResponse("Internal Server Error", { status: 500 });
