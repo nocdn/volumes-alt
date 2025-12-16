@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bunx convex dev --once && concurrently 'bun run --bun next dev' 'bunx convex dev'",
-    "build": "bun run --bun next build",
+    "build": "next build",
     "dev:web": "bun run --bun next dev",
     "dev:convex": "bunx convex dev",
     "start": "bun run --bun next start"
