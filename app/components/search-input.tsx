@@ -576,7 +576,7 @@ export const SearchInput = memo(function SearchInput({
         <Search size={17} color="gray" className="mt-1 shrink-0" />
         <EditorContent
           editor={editor}
-          className="flex-1 whitespace-pre-wrap wrap-break-word"
+          className="flex-1 whitespace-pre-wrap break-all"
           onKeyDown={handleEditorKeyDown}
           autoCorrect="off"
           spellCheck={false}
