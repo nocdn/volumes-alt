@@ -6,7 +6,7 @@ import { cacheLife, cacheTag } from "next/cache";
 async function getTags() {
   "use cache";
   cacheTag("bookmarks-tags");
-  cacheLife("days");
+  cacheLife("days"); // 1 day client, 1 week server
 
   const bookmarks = await fetchQuery(api.bookmarks.list, {});
 
@@ -35,11 +35,20 @@ async function getTags() {
   };
 }
 
-// Route handler just calls the cached function
 export async function GET() {
   try {
     const data = await getTags();
-    return NextResponse.json(data);
+
+    return NextResponse.json(data, {
+      headers: {
+        // CDN + browser caching: 1 day
+        // stale-while-revalidate: serve stale for 7 days while revalidating
+        "Cache-Control":
+          "public, s-maxage=86400, max-age=86400, stale-while-revalidate=604800",
+        // Vercel-specific CDN cache (takes precedence on Vercel Edge)
+        "CDN-Cache-Control": "max-age=86400",
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch tags via API", error);
     return new NextResponse("Internal Server Error", { status: 500 });
