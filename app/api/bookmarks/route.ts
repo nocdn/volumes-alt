@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
     const tags: string[] = Array.isArray(tagsInput)
       ? tagsInput
-          .map((t) => (typeof t === "string" ? t.trim() : ""))
+          .map((t) => (typeof t === "string" ? t.trim().toLowerCase() : ""))
           .filter((t) => t.length > 0)
       : [];
 
