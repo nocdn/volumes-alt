@@ -378,6 +378,8 @@ export const SearchInput = memo(function SearchInput({
           "outline-none font-[var(--font-inter)] text-base leading-relaxed min-h-[1.5rem] flex-1",
         autocapitalize: "off",
         autocorrect: "off",
+        // Ensuring spellcheck is also off for more robust disabling of input corrections
+        spellCheck: "false",
         style: `font-weight: ${isMobile ? 500 : 420};`,
       },
       handleKeyDown: (_view, event) => {
@@ -576,6 +578,8 @@ export const SearchInput = memo(function SearchInput({
           editor={editor}
           className="flex-1 whitespace-pre-wrap wrap-break-word"
           onKeyDown={handleEditorKeyDown}
+          autoCorrect="off"
+          spellCheck={false}
         />
       </div>
 
