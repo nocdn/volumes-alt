@@ -89,7 +89,7 @@ const BookmarkItem = memo(function BookmarkItem({
   );
 
   const handleTitleClick = useCallback(() => {
-    window.open(bookmark.url, "_blank", "noopener,noreferrer");
+    window.location.href = bookmark.url;
   }, [bookmark.url]);
 
   const handleDeleteClick = useCallback(() => {
