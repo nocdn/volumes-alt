@@ -6,12 +6,6 @@ import metascraperLogo from "metascraper-logo-favicon";
 
 const scraper = metascraper([metascraperTitle(), metascraperLogo()]);
 
-export async function getServerTime() {
-  return {
-    server_time: new Date().toISOString(),
-  };
-}
-
 export async function getPageMetadata(url: string) {
   const response = await fetch(url);
   const html = await response.text();

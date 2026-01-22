@@ -7,6 +7,7 @@ import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { SearchInput } from "./search-input";
 import { BookmarkList } from "./bookmark-list";
 import { getPageMetadata } from "../actions";
+import { ConvexClientProvider } from "../ConvexClientProvider";
 
 type Bookmark = Doc<"bookmarks">;
 
@@ -18,7 +19,7 @@ type EditingBookmark = {
   favicon?: string;
 };
 
-export function BookmarkApp() {
+function BookmarkAppContent() {
   const bookmarks = useQuery(api.bookmarks.list);
   const createBookmark = useMutation(api.bookmarks.createBookmark);
   const updateBookmark = useMutation(api.bookmarks.updateBookmark);
@@ -342,5 +343,13 @@ export function BookmarkApp() {
         pendingDeletions={pendingDeletions}
       />
     </div>
+  );
+}
+
+export function BookmarkApp() {
+  return (
+    <ConvexClientProvider>
+      <BookmarkAppContent />
+    </ConvexClientProvider>
   );
 }
