@@ -56,6 +56,7 @@ const BookmarkItem = memo(function BookmarkItem({
   const isFetchingPlaceholder = isOptimistic;
   const hoverTimerRef = useRef<number | null>(null);
   const [showTags, setShowTags] = useState(false);
+  const [faviconError, setFaviconError] = useState(false);
   const isMobile = useIsMobile();
 
   const clearHoverTimer = useCallback(() => {
@@ -69,9 +70,7 @@ const BookmarkItem = memo(function BookmarkItem({
     if (isMobile) return;
     if (bookmark.tags.length === 0) return;
     clearHoverTimer();
-    hoverTimerRef.current = window.setTimeout(() => {
-      setShowTags(true);
-    }, 80);
+    setShowTags(true);
   }, [clearHoverTimer, bookmark.tags.length, isMobile]);
 
   const handleFaviconHoverEnd = useCallback(() => {
@@ -106,6 +105,13 @@ const BookmarkItem = memo(function BookmarkItem({
           onMouseEnter={handleFaviconHoverStart}
           onMouseLeave={handleFaviconHoverEnd}
         />
+      ) : faviconError ? (
+        <div
+          className="shrink-0 w-4 h-4 rounded-[3px] bg-[#e7e7e7] cursor-pointer"
+          onClick={handleFaviconClick}
+          onMouseEnter={handleFaviconHoverStart}
+          onMouseLeave={handleFaviconHoverEnd}
+        />
       ) : (
         <img
           src={bookmark.favicon}
@@ -116,11 +122,7 @@ const BookmarkItem = memo(function BookmarkItem({
           onClick={handleFaviconClick}
           onMouseEnter={handleFaviconHoverStart}
           onMouseLeave={handleFaviconHoverEnd}
-          onError={(e) => {
-            // Fallback to a default icon on error
-            (e.target as HTMLImageElement).src =
-              "https://www.google.com/s2/favicons?domain=example.com&sz=128";
-          }}
+          onError={() => setFaviconError(true)}
         />
       )}
 
