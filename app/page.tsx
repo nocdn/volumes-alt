@@ -1,5 +1,3 @@
-"use client";
-
 import { Suspense } from "react";
 import { BookmarkApp } from "./components/bookmark-app";
 import { BookmarkAppFallback } from "./components/bookmark-app-fallback";

@@ -1,8 +1,17 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
   cacheComponents: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "motion"],
+  },
+  devIndicators: false,
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
