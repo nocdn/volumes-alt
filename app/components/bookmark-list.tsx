@@ -1,7 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo, useRef, useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
@@ -126,15 +125,14 @@ const BookmarkItem = memo(function BookmarkItem({
         />
       )}
 
-      {/* Title / Tags - grid overlay for smooth transition */}
+      {/* Title / Tags - grid overlay */}
       <div className="grid flex-1 min-w-0 ">
-        {/* Title - fades out when tags show */}
+        {/* Title */}
         <div
           className="cursor-pointer truncate"
           style={{
             gridArea: "1/1",
-            opacity: showTags ? 0 : 1,
-            transition: "opacity 0.15s ease-out",
+            display: showTags ? "none" : "block",
           }}
           onClick={handleTitleClick}
         >
@@ -148,36 +146,22 @@ const BookmarkItem = memo(function BookmarkItem({
           </span>
         </div>
 
-        {/* Tags - stagger in when hovering */}
-        <AnimatePresence>
-          {showTags && bookmark.tags.length > 0 && (
-            <motion.div
-              className="flex items-center gap-1.5 overflow-hidden"
-              style={{ gridArea: "1/1" }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
-            >
-              {bookmark.tags.map((tag, index) => (
-                <motion.span
-                  key={tag}
-                  className="text-[13px] px-2.5 py-[2.5px] rounded-lg bg-[#F5F3FF] text-[#6A00F5] font-[450] capitalize shrink-0"
-                  style={{ letterSpacing: "0.02em" }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{
-                    duration: 0.12,
-                    delay: index * 0.04,
-                  }}
-                >
-                  {tag}
-                </motion.span>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {showTags && bookmark.tags.length > 0 ? (
+          <div
+            className="flex items-center gap-1.5 overflow-hidden"
+            style={{ gridArea: "1/1" }}
+          >
+            {bookmark.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[13px] px-2.5 py-[2.5px] rounded-lg bg-[#F5F3FF] text-[#6A00F5] font-[450] capitalize shrink-0"
+                style={{ letterSpacing: "0.02em" }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {/* Delete Button */}
@@ -250,33 +234,6 @@ export const BookmarkList = memo(function BookmarkList({
     }));
   }, [visibleBookmarks]);
 
-  // Only animate on first load; subsequent renders are instant.
-  // Use a ref that flips after a delay to ensure all initial items animate,
-  // even if data arrives in chunks.
-  const hasAnimatedRef = useRef(false);
-  const [shouldAnimate, setShouldAnimate] = useState(true);
-
-  useEffect(() => {
-    if (hasAnimatedRef.current) return;
-    if (bookmarksWithDates.length > 0) {
-      hasAnimatedRef.current = true;
-      // Wait for stagger animation to complete before disabling animations
-      const staggerLimit = 30;
-      const staggerDelay = 0.02;
-      const animationDuration = 0.15;
-      const totalAnimationTime =
-        (Math.min(bookmarksWithDates.length, staggerLimit) - 1) * staggerDelay +
-        animationDuration;
-      const timer = setTimeout(
-        () => {
-          setShouldAnimate(false);
-        },
-        totalAnimationTime * 1000 + 100
-      ); // +100ms buffer
-      return () => clearTimeout(timer);
-    }
-  }, [bookmarksWithDates.length]);
-
   // if (visibleBookmarks.length === 0) {
   //   return (
   //     <div className="flex flex-col gap-4 w-[50%] px-1">
@@ -289,39 +246,16 @@ export const BookmarkList = memo(function BookmarkList({
 
   return (
     <div className="flex flex-col gap-4 w-[85%] md:max-w-[50%] px-1">
-      {bookmarksWithDates.map(({ bookmark, formattedDate }, index) => {
-        // Only stagger-animate the first N items; the rest appear instantly
-        const staggerLimit = 30;
-        const staggerDelay = 0.02;
-        const shouldStagger = shouldAnimate && index < staggerLimit;
-
-        return (
-          <motion.div
-            key={bookmark._id}
-            initial={
-              shouldStagger ? { opacity: 0, filter: "blur(1px)" } : false
-            }
-            animate={
-              shouldStagger ? { opacity: 1, filter: "blur(0px)" } : undefined
-            }
-            transition={
-              shouldStagger
-                ? {
-                    duration: 0.15,
-                    delay: index * staggerDelay,
-                  }
-                : undefined
-            }
-          >
-            <BookmarkItem
-              bookmark={bookmark}
-              formattedDate={formattedDate}
-              onDelete={handleDelete}
-              onEdit={onEdit}
-            />
-          </motion.div>
-        );
-      })}
+      {bookmarksWithDates.map(({ bookmark, formattedDate }) => (
+        <div key={bookmark._id}>
+          <BookmarkItem
+            bookmark={bookmark}
+            formattedDate={formattedDate}
+            onDelete={handleDelete}
+            onEdit={onEdit}
+          />
+        </div>
+      ))}
     </div>
   );
 });
