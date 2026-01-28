@@ -306,6 +306,7 @@ function BookmarkAppContent() {
   // When fresh data arrives from Convex, update cache and local state
   useEffect(() => {
     if (!bookmarks) return;
+    console.log(`[Convex] Fetched ${bookmarks.length} bookmarks`);
     setLocalBookmarks(bookmarks);
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(bookmarks));
@@ -326,6 +327,7 @@ function BookmarkAppContent() {
     <div className="flex flex-col items-center">
       <SearchInput
         allTags={allTags}
+        bookmarks={bookmarks}
         onSearchChange={handleSearchChange}
         onClearSearch={handleClearSearch}
         onSubmit={handleSubmit}

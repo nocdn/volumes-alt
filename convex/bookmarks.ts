@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 
 export const list = query({
   handler: async (ctx) => {
-    const tasks = await ctx.db.query("bookmarks").order("desc").take(100);
+    const tasks = await ctx.db.query("bookmarks").order("desc").collect();
     return tasks;
   },
 });

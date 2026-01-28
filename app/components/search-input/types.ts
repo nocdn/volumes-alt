@@ -1,7 +1,8 @@
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
 
 export interface SearchInputProps {
   allTags: string[];
+  bookmarks?: Doc<"bookmarks">[];
   onSearchChange: (query: string) => void;
   onClearSearch?: () => void;
   onSubmit: (

@@ -40,6 +40,7 @@ const MENTION_HTML_ATTRIBUTES = {
 
 export const SearchInput = memo(function SearchInput({
   allTags,
+  bookmarks,
   onSearchChange,
   onClearSearch,
   onSubmit,
@@ -60,6 +61,40 @@ export const SearchInput = memo(function SearchInput({
   const hasFocusedOnceRef = useRef(false);
   const tagsRef = useRef<string[]>(allTags);
   const setTagChipsRef = useRef(setTagChips);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleExportBookmarks = useCallback(() => {
+    if (!bookmarks || bookmarks.length === 0) return;
+    
+    const now = new Date();
+    const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const time = now.toTimeString().slice(0, 5).replace(":", "-"); // HH-MM
+    const filename = `bookmarks-${date}-${time}.json`;
+    const json = JSON.stringify(bookmarks, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [bookmarks]);
+
+  const handleSearchIconPressStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      handleExportBookmarks();
+    }, 1500);
+  }, [handleExportBookmarks]);
+
+  const handleSearchIconPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     tagsRef.current = allTags;
@@ -251,7 +286,14 @@ export const SearchInput = memo(function SearchInput({
     <div className="rounded-4xl [corner-shape:squircle] bg-[#FEFFFF] border-shadow w-[85%] md:max-w-[50%] px-5 py-5 flex flex-col gap-4">
       {/* Top row: fixed height, search icon always visible */}
       <div className="flex items-start gap-2 min-h-6.5">
-        <div className="size-[17px] mt-1 shrink-0 flex items-center justify-center">
+        <div
+          className="size-[17px] mt-1 shrink-0 flex items-center justify-center cursor-pointer select-none"
+          onMouseDown={handleSearchIconPressStart}
+          onMouseUp={handleSearchIconPressEnd}
+          onMouseLeave={handleSearchIconPressEnd}
+          onTouchStart={handleSearchIconPressStart}
+          onTouchEnd={handleSearchIconPressEnd}
+        >
           <Search size={17} color="gray" />
         </div>
         <EditorContent
